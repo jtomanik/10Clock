@@ -31,7 +31,7 @@ open class TenClock : UIControl{
     open var delegate:TenClockDelegate?
     //overall inset. Controls all sizes.
     @IBInspectable var insetAmount: CGFloat = 40
-    var internalShift: CGFloat = 5;
+    var internalShift: CGFloat = 5
     var pathWidth:CGFloat = 54
 
     var timeStepSize: CGFloat = 5
@@ -55,10 +55,31 @@ open class TenClock : UIControl{
 
         return r
     }()
+    
+    private let watchFaceDateFormatter : DateFormatter = {
+        var df = DateFormatter()
+        df.dateFormat = "HH:mm"
+        return df
+    }()
 
+    private var _clockType : Int = 12
+    open var clockType : Int {
+        get {
+            return _clockType
+        }
+        set(newValue) {
+            if newValue == 24 {
+                _clockType = newValue
+            }
+            else {
+                _clockType = 12
+            }
+        }
+    }
+    
     let repLayer2:CAReplicatorLayer = {
         var r = CAReplicatorLayer()
-        r.instanceCount = 12
+        r.instanceCount = 24
         r.instanceTransform =
             CATransform3DMakeRotation(
                 CGFloat(2*M_PI) / CGFloat(r.instanceCount),
@@ -66,9 +87,10 @@ open class TenClock : UIControl{
 
         return r
     }()
+    
     let twoPi =  CGFloat(2 * M_PI)
     let fourPi =  CGFloat(4 * M_PI)
-    var headAngle: CGFloat = 0{
+    var headAngle: CGFloat = 0 {
         didSet{
             if (headAngle > fourPi  +  CGFloat(M_PI_2)){
                 headAngle -= fourPi
@@ -195,13 +217,13 @@ open class TenClock : UIControl{
         let components = self.calendar.dateComponents(units, from: date)
         let min = Double(  60 * components.hour! + components.minute! )
 
-        return medStepFunction(CGFloat(M_PI_2 - ( min / (12 * 60)) * 2 * M_PI), stepSize: CGFloat( 2 * M_PI / (12 * 60 / 5)))
+        return medStepFunction(CGFloat(M_PI_2 - ( min / (Double(clockType) * 60)) * 2 * M_PI), stepSize: CGFloat( 2 * M_PI / (Double(clockType) * 60 / 5)))
     }
 
     // input an angle, output: 0 to 4pi
     func angleToTime(_ angle: Angle) -> Date{
         let dAngle = Double(angle)
-        let min = CGFloat(((M_PI_2 - dAngle) / (2 * M_PI)) * (12 * 60))
+        let min = CGFloat(((M_PI_2 - dAngle) / (2 * M_PI)) * (Double(clockType) * 60))
         let startOfToday = Calendar.current.startOfDay(for: Date())
         return self.calendar.date(byAdding: .minute, value: Int(medStepFunction(min, stepSize: 5/* minute steps*/)), to: startOfToday)!
     }
@@ -330,8 +352,8 @@ open class TenClock : UIControl{
         let cgFont = CTFontCreateWithName(f.fontName as CFString?, f.pointSize/2,nil)
         let startPos = CGPoint(x: numeralsLayer.bounds.midX, y: 15)
         let origin = numeralsLayer.center
-        let step = (2 * M_PI) / 12
-        for i in (1 ... 12){
+        let step = (2 * M_PI) / Double(clockType)
+        for i in (1 ... clockType){
             let l = CATextLayer()
             l.bounds.size = CGSize(width: i > 9 ? 18 : 8, height: 15)
             l.fontSize = f.pointSize
@@ -349,7 +371,7 @@ open class TenClock : UIControl{
         let f = UIFont.preferredFont(forTextStyle: UIFontTextStyle.title1)
         let cgFont = CTFontCreateWithName(f.fontName as CFString?, f.pointSize/2,nil)
 //        let titleTextLayer = CATextLayer()
-        titleTextLayer.bounds.size = CGSize( width: titleTextInset.size.width, height: 50)
+        titleTextLayer.bounds.size = CGSize( width: titleTextInset.size.width, height: 100)
         titleTextLayer.fontSize = f.pointSize
         titleTextLayer.alignmentMode = kCAAlignmentCenter
         titleTextLayer.foregroundColor = disabledFormattedColor(centerTextColor ?? tintColor).cgColor
@@ -357,8 +379,9 @@ open class TenClock : UIControl{
         titleTextLayer.font = cgFont
         //var computedTailAngle = tailAngle //+ (headAngle > tailAngle ? twoPi : 0)
         //computedTailAngle +=  (headAngle > computedTailAngle ? twoPi : 0)
-        let fiveMinIncrements = Int( ((tailAngle - headAngle) / twoPi) * 12 /*hrs*/ * 12 /*5min increments*/)
-        titleTextLayer.string = "\(fiveMinIncrements / 12)hr \((fiveMinIncrements % 12) * 5)min"
+//        let fiveMinIncrements = Int( ((tailAngle - headAngle) / twoPi) * CGFloat(clockType) /*hrs*/ * CGFloat(clockType) /*5min increments*/)
+//        titleTextLayer.string = "\(fiveMinIncrements / clockType)hr \((fiveMinIncrements % clockType) * 5)min"
+        titleTextLayer.string = "\(watchFaceDateFormatter.string(from: startDate))\n↓\n\(watchFaceDateFormatter.string(from: endDate))"
         titleTextLayer.position = gradientLayer.center
 
     }
@@ -489,14 +512,14 @@ open class TenClock : UIControl{
         switch(layer){
         case headLayer:
             if (shouldMoveHead) {
-            pointMover = pointerMoverProducer({ _ in self.headAngle}, {self.headAngle += $0; self.tailAngle += 0})
+                pointMover = pointerMoverProducer({ _ in self.headAngle}, {self.headAngle += $0; self.tailAngle += 0})
             } else {
                 pointMover = nil
             }
         case tailLayer:
             if (shouldMoveHead) {
-            pointMover = pointerMoverProducer({_ in self.tailAngle}, {self.headAngle += 0;self.tailAngle += $0})
-                } else {
+                pointMover = pointerMoverProducer({_ in self.tailAngle}, {self.headAngle += 0;self.tailAngle += $0})
+            } else {
                     pointMover = nil
             }
         case pathLayer:
