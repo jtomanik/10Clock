@@ -24,14 +24,19 @@ func medStepFunction(_ val: CGFloat, stepSize:CGFloat) -> CGFloat{
 
 }
 
-enum ClockGradient {
-    case linear
-    case radial
+public enum ClockGradient: String {
+    case linear = "linear"
+    case radial = "radial"
+}
+
+public enum ClockType: Int {
+    case twelveHour = 12
+    case twentyFourHour = 24
 }
 
 //XCPlaygroundPage.currentPage.needsIndefiniteExecution = true
 //@IBDesignable
-open class TenClock : UIControl{
+@IBDesignable open class TenClock : UIControl {
 
     open var delegate:TenClockDelegate?
     //overall inset. Controls all sizes.
@@ -68,22 +73,20 @@ open class TenClock : UIControl{
         return df
     }()
 
-    private var _clockType : Int = 12
-    open var clockType : Int {
-        get {
-            return _clockType
-        }
-        set(newValue) {
-            if newValue == 24 {
-                _clockType = newValue
-            }
-            else {
-                _clockType = 12
+    private var clockTypeHours : Int = 12
+    
+    open var gradientType: ClockGradient = .radial
+    
+    open var clockType: ClockType = .twelveHour {
+        willSet {
+            switch newValue {
+            case .twelveHour:
+                clockTypeHours = 12
+            case .twentyFourHour:
+                clockTypeHours = 24
             }
         }
     }
-    
-    var gradientType: ClockGradient = .radial
     
     let repLayer2:CAReplicatorLayer = {
         var r = CAReplicatorLayer()
@@ -225,13 +228,13 @@ open class TenClock : UIControl{
         let components = self.calendar.dateComponents(units, from: date)
         let min = Double(  60 * components.hour! + components.minute! )
 
-        return medStepFunction(CGFloat(M_PI_2 - ( min / (Double(clockType) * 60)) * 2 * M_PI), stepSize: CGFloat( 2 * M_PI / (Double(clockType) * 60 / 5)))
+        return medStepFunction(CGFloat(M_PI_2 - ( min / (Double(clockTypeHours) * 60)) * 2 * M_PI), stepSize: CGFloat( 2 * M_PI / (Double(clockTypeHours) * 60 / 5)))
     }
 
     // input an angle, output: 0 to 4pi
     func angleToTime(_ angle: Angle) -> Date{
         let dAngle = Double(angle)
-        let min = CGFloat(((M_PI_2 - dAngle) / (2 * M_PI)) * (Double(clockType) * 60))
+        let min = CGFloat(((M_PI_2 - dAngle) / (2 * M_PI)) * (Double(clockTypeHours) * 60))
         let startOfToday = Calendar.current.startOfDay(for: Date())
         return self.calendar.date(byAdding: .minute, value: Int(medStepFunction(min, stepSize: 5/* minute steps*/)), to: startOfToday)!
     }
@@ -280,26 +283,16 @@ open class TenClock : UIControl{
 
     }
     func updateGradientLayer() {
-        
-        gradientLayer.colors =
-            [tintColor,
-             tintColor.modified(withAdditionalHue: -0.08, additionalSaturation: 0.15, additionalBrightness: 0.2)]
-                .map(disabledFormattedColor)
-                .map{$0.cgColor}
+        gradientLayer.colors = gradientColors.map(disabledFormattedColor).map{$0.cgColor}
         gradientLayer.mask = overallPathLayer
         gradientLayer.startPoint = CGPoint(x:0,y:0)
+        gradientLayer.locations = gradientLocations as [NSNumber]?
     }
     
     func updateRadialGradientLayer() {
-        
-        radialGradientLayer.colors =
-            [tintColor,
-             tintColor.modified(withAdditionalHue: -0.08, additionalSaturation: 0.15, additionalBrightness: 0.2)]
-                .map(disabledFormattedColor)
-                .map{$0.cgColor}
         radialGradientLayer.mask = overallPathLayer
         radialGradientLayer.radius = radialGradientLayer.size.width/2.0
-        radialGradientLayer.colors = gradientColors.map{$0.cgColor}
+        radialGradientLayer.colors = gradientColors.map(disabledFormattedColor).map{$0.cgColor}
         radialGradientLayer.locations = gradientLocations
     }
 
@@ -382,8 +375,8 @@ open class TenClock : UIControl{
         let cgFont = CTFontCreateWithName(f.fontName as CFString?, f.pointSize/2,nil)
         let startPos = CGPoint(x: numeralsLayer.bounds.midX, y: 15)
         let origin = numeralsLayer.center
-        let step = (2 * M_PI) / Double(clockType)
-        for i in (1 ... clockType){
+        let step = (2 * M_PI) / Double(clockTypeHours)
+        for i in (1 ... clockTypeHours){
             let l = CATextLayer()
             l.bounds.size = CGSize(width: i > 9 ? 18 : 8, height: 15)
             l.fontSize = f.pointSize
@@ -409,8 +402,8 @@ open class TenClock : UIControl{
         titleTextLayer.font = cgFont
         //var computedTailAngle = tailAngle //+ (headAngle > tailAngle ? twoPi : 0)
         //computedTailAngle +=  (headAngle > computedTailAngle ? twoPi : 0)
-//        let fiveMinIncrements = Int( ((tailAngle - headAngle) / twoPi) * CGFloat(clockType) /*hrs*/ * CGFloat(clockType) /*5min increments*/)
-//        titleTextLayer.string = "\(fiveMinIncrements / clockType)hr \((fiveMinIncrements % clockType) * 5)min"
+//        let fiveMinIncrements = Int( ((tailAngle - headAngle) / twoPi) * CGFloat(clockTypeHours) /*hrs*/ * CGFloat(clockTypeHours) /*5min increments*/)
+//        titleTextLayer.string = "\(fiveMinIncrements / clockTypeHours)hr \((fiveMinIncrements % clockTypeHours) * 5)min"
         titleTextLayer.string = "\(watchFaceDateFormatter.string(from: startDate))\n↓\n\(watchFaceDateFormatter.string(from: endDate))"
         titleTextLayer.position = layer.center
 
@@ -476,7 +469,17 @@ open class TenClock : UIControl{
         backgroundColor = UIColor ( red: 0.1149, green: 0.115, blue: 0.1149, alpha: 0.0 )
         createSublayers()
     }
-
+    
+    init(frame: CGRect, clockType: ClockType, gradientType: ClockGradient = .linear) {
+        super.init(frame: frame)
+        switch clockType {
+        case .twelveHour:
+            self.clockTypeHours = 12
+        case .twentyFourHour:
+            self.clockTypeHours = 24
+        }
+        self.gradientType = gradientType
+    }
 
     required public init?(coder: NSCoder) {
         super.init(coder: coder)

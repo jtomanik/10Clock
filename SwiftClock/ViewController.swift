@@ -86,7 +86,6 @@ class ViewController: UITableViewController, TenClockDelegate {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         tableView.contentInset = UIEdgeInsets(top: 20, left: 0, bottom: 0, right: 0)
-        clock.clockType = 24
         
         clock.startDate = Date().dateToNearestNextHalfHour()
         // Set the default end date to be 3 hours from the start
@@ -94,7 +93,7 @@ class ViewController: UITableViewController, TenClockDelegate {
         
         clock.gradientColors = [UIColor.red, UIColor.blue]
         clock.gradientLocations = [0.5, 1.0]
-        
+        clock.clockType = .twentyFourHour
         clock.delegate = self
     }
     override func viewWillAppear(_ animated: Bool) {
