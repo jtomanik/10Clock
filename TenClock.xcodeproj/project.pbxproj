@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		123A00098C8A1EB16C8B2BAC /* CoreAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 123A0EBFF5B6F30085CBA25B /* CoreAnimation.swift */; };
 		D1F69DFC1DE32B78006D3D70 /* Date+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F69DFB1DE32B78006D3D70 /* Date+Extensions.swift */; };
+		D1F69DFF1DE346BD006D3D70 /* RadialGradientLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F69DFD1DE34493006D3D70 /* RadialGradientLayer.swift */; };
 		D8B040301D7F2BB200B11B6A /* TenClock.h in Headers */ = {isa = PBXBuildFile; fileRef = D8B0402F1D7F2BB200B11B6A /* TenClock.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		D8B0403A1D7F69D700B11B6A /* CoreGraphicsExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 123A072C9B05F82F42BFA028 /* CoreGraphicsExtensions.swift */; };
 		D8B0403C1D7F69D700B11B6A /* DateExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 123A0A5F3EBBDD4415A60AEF /* DateExtensions.swift */; };
@@ -60,6 +61,7 @@
 		123A0C52CF7F9A43C23EF319 /* Clock.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Clock.swift; sourceTree = "<group>"; };
 		123A0EBFF5B6F30085CBA25B /* CoreAnimation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoreAnimation.swift; sourceTree = "<group>"; };
 		D1F69DFB1DE32B78006D3D70 /* Date+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Date+Extensions.swift"; sourceTree = "<group>"; };
+		D1F69DFD1DE34493006D3D70 /* RadialGradientLayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RadialGradientLayer.swift; sourceTree = "<group>"; };
 		D82D37F71D850C44004BB61C /* module.modulemap */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
 		D8B0402D1D7F2BB200B11B6A /* TenClock.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = TenClock.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D8B0402F1D7F2BB200B11B6A /* TenClock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TenClock.h; sourceTree = "<group>"; };
@@ -111,6 +113,7 @@
 				D82D37F71D850C44004BB61C /* module.modulemap */,
 				123A0A5F3EBBDD4415A60AEF /* DateExtensions.swift */,
 				123A0EBFF5B6F30085CBA25B /* CoreAnimation.swift */,
+				D1F69DFD1DE34493006D3D70 /* RadialGradientLayer.swift */,
 			);
 			path = 10Clock;
 			sourceTree = "<group>";
@@ -315,6 +318,7 @@
 				D8B0403A1D7F69D700B11B6A /* CoreGraphicsExtensions.swift in Sources */,
 				D8B0403C1D7F69D700B11B6A /* DateExtensions.swift in Sources */,
 				123A00098C8A1EB16C8B2BAC /* CoreAnimation.swift in Sources */,
+				D1F69DFF1DE346BD006D3D70 /* RadialGradientLayer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

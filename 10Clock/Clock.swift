@@ -24,6 +24,11 @@ func medStepFunction(_ val: CGFloat, stepSize:CGFloat) -> CGFloat{
 
 }
 
+enum ClockGradient {
+    case linear
+    case radial
+}
+
 //XCPlaygroundPage.currentPage.needsIndefiniteExecution = true
 //@IBDesignable
 open class TenClock : UIControl{
@@ -36,6 +41,7 @@ open class TenClock : UIControl{
 
     var timeStepSize: CGFloat = 5
     let gradientLayer = CAGradientLayer()
+    let radialGradientLayer = RadialGradientLayer()
     let trackLayer = CAShapeLayer()
     let pathLayer = CAShapeLayer()
     let headLayer = CAShapeLayer()
@@ -76,6 +82,8 @@ open class TenClock : UIControl{
             }
         }
     }
+    
+    var gradientType: ClockGradient = .radial
     
     let repLayer2:CAReplicatorLayer = {
         var r = CAReplicatorLayer()
@@ -238,8 +246,13 @@ open class TenClock : UIControl{
 
         strokeColor = disabledFormattedColor(tintColor)
         overallPathLayer.occupation = layer.occupation
-        gradientLayer.occupation = layer.occupation
-
+        
+        if self.gradientType == .linear {
+            gradientLayer.occupation = layer.occupation
+        } else {
+            radialGradientLayer.occupation = layer.occupation
+        }
+        
         trackLayer.occupation = (inset.size, layer.center)
 
         pathLayer.occupation = (inset.size, overallPathLayer.center)
@@ -252,7 +265,11 @@ open class TenClock : UIControl{
 
 
         CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
-        updateGradientLayer()
+        if self.gradientType == .linear {
+            updateGradientLayer()
+        } else {
+            updateRadialGradientLayer()
+        }
         updateTrackLayerPath()
         updatePathLayerPath()
         updateHeadTailLayers()
@@ -263,14 +280,25 @@ open class TenClock : UIControl{
 
     }
     func updateGradientLayer() {
-
+        
         gradientLayer.colors =
             [tintColor,
-                tintColor.modified(withAdditionalHue: -0.08, additionalSaturation: 0.15, additionalBrightness: 0.2)]
+             tintColor.modified(withAdditionalHue: -0.08, additionalSaturation: 0.15, additionalBrightness: 0.2)]
                 .map(disabledFormattedColor)
                 .map{$0.cgColor}
         gradientLayer.mask = overallPathLayer
         gradientLayer.startPoint = CGPoint(x:0,y:0)
+    }
+    
+    func updateRadialGradientLayer() {
+        
+        radialGradientLayer.colors =
+            [tintColor,
+             tintColor.modified(withAdditionalHue: -0.08, additionalSaturation: 0.15, additionalBrightness: 0.2)]
+                .map(disabledFormattedColor)
+                .map{$0.cgColor}
+        radialGradientLayer.mask = overallPathLayer
+        radialGradientLayer.radius = radialGradientLayer.size.width/2.0
     }
 
     func updateTrackLayerPath() {
@@ -382,7 +410,7 @@ open class TenClock : UIControl{
 //        let fiveMinIncrements = Int( ((tailAngle - headAngle) / twoPi) * CGFloat(clockType) /*hrs*/ * CGFloat(clockType) /*5min increments*/)
 //        titleTextLayer.string = "\(fiveMinIncrements / clockType)hr \((fiveMinIncrements % clockType) * 5)min"
         titleTextLayer.string = "\(watchFaceDateFormatter.string(from: startDate))\n↓\n\(watchFaceDateFormatter.string(from: endDate))"
-        titleTextLayer.position = gradientLayer.center
+        titleTextLayer.position = layer.center
 
     }
     func tick() -> CAShapeLayer{
@@ -426,9 +454,16 @@ open class TenClock : UIControl{
         overallPathLayer.addSublayer(tailLayer)
         overallPathLayer.addSublayer(titleTextLayer)
         layer.addSublayer(overallPathLayer)
-        layer.addSublayer(gradientLayer)
-        gradientLayer.addSublayer(topHeadLayer)
-        gradientLayer.addSublayer(topTailLayer)
+
+        if self.gradientType == .linear {
+            layer.addSublayer(gradientLayer)
+            gradientLayer.addSublayer(topHeadLayer)
+            gradientLayer.addSublayer(topTailLayer)
+        } else {
+            layer.addSublayer(radialGradientLayer)
+            radialGradientLayer.addSublayer(topHeadLayer)
+            radialGradientLayer.addSublayer(topTailLayer)
+        }
         update()
         strokeColor = disabledFormattedColor(tintColor)
     }
