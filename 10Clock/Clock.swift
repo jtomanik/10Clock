@@ -140,6 +140,9 @@ open class TenClock : UIControl{
 
     open var headTextColor = UIColor.black
     open var tailTextColor = UIColor.black
+    
+    open var gradientColors = [UIColor.orange, UIColor.yellow]
+    open var gradientLocations: [CGFloat] = [0.0, 1.0]
 
     open var minorTicksEnabled:Bool = true
     open var majorTicksEnabled:Bool = true
@@ -153,9 +156,6 @@ open class TenClock : UIControl{
     func disabledFormattedColor(_ color:UIColor) -> UIColor{
         return disabled ? color.greyscale : color
     }
-
-
-
 
     var trackWidth:CGFloat {return pathWidth }
     func proj(_ theta:Angle) -> CGPoint{
@@ -299,6 +299,8 @@ open class TenClock : UIControl{
                 .map{$0.cgColor}
         radialGradientLayer.mask = overallPathLayer
         radialGradientLayer.radius = radialGradientLayer.size.width/2.0
+        radialGradientLayer.colors = gradientColors.map{$0.cgColor}
+        radialGradientLayer.locations = gradientLocations
     }
 
     func updateTrackLayerPath() {
