@@ -290,7 +290,6 @@ public enum ClockInteractionType: String {
     }
     
     func setup() {
-        print("Setup Layers")
         // Check if we're drawing 12 hour or 24 hour clock
         self.clockHourTypeHours = self.clockHourType.rawValue
         
@@ -298,6 +297,7 @@ public enum ClockInteractionType: String {
         
         // Create the sublayers that make up the clock
         createSublayers()
+        
         // Update all the layers
         update()
     }
@@ -625,7 +625,9 @@ public enum ClockInteractionType: String {
     
     override open func prepareForInterfaceBuilder() {
         super.prepareForInterfaceBuilder()
-        update()
+        // Clear all layers
+        self.layer.sublayers?.forEach({$0.removeFromSuperlayer()})
+        setup()
     }
 
     //MARK:- Helper functions
