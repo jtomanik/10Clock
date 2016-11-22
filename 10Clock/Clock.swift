@@ -45,10 +45,10 @@ public enum ClockInteractionType: String {
 //XCPlaygroundPage.currentPage.needsIndefiniteExecution = true
 //@IBDesignable
 @IBDesignable open class TenClock : UIControl {
-
-    open var delegate:TenClockDelegate?
     
     //MARK:- Public properties
+    open var delegate:TenClockDelegate?
+    
     open var startDate: Date{
         get{return angleToTime(tailAngle) }
         set{ tailAngle = timeToAngle(newValue) }
@@ -180,7 +180,7 @@ public enum ClockInteractionType: String {
             return UIColor(cgColor: trackLayer.strokeColor!)
         }
         set(strokeColor) {
-            trackLayer.strokeColor = strokeColor.withAlphaComponent(0.1).cgColor
+            trackLayer.strokeColor = strokeColor.cgColor
             pathLayer.strokeColor = strokeColor.cgColor
         }
     }
@@ -242,8 +242,15 @@ public enum ClockInteractionType: String {
     let topHeadLayer = CAShapeLayer()
     let topTailLayer = CAShapeLayer()
     let numeralsLayer = CALayer()
-    let titleTextLayer = CATextLayer()
+    var titleTextLayer = CATextLayer()
     let overallPathLayer = CALayer()
+    
+    let exactTitleTextLayer = CATextLayer()
+    
+    // The invisible trigger for user interaction
+    let exactTimeIndicatorTouchLayer = CAShapeLayer()
+    // The shape that is displayed
+    let exactTimeIndicatorLayer = CAShapeLayer()
     
     let repLayer:CAReplicatorLayer = {
         var r = CAReplicatorLayer()
@@ -308,21 +315,33 @@ public enum ClockInteractionType: String {
         layer.addSublayer(numeralsLayer)
         layer.addSublayer(trackLayer)
         
-        overallPathLayer.addSublayer(pathLayer)
-        overallPathLayer.addSublayer(headLayer)
-        overallPathLayer.addSublayer(tailLayer)
-        overallPathLayer.addSublayer(titleTextLayer)
-        layer.addSublayer(overallPathLayer)
-        
-        if self.gradientType == .linear {
+        switch self.gradientType {
+        case .linear:
             layer.addSublayer(gradientLayer)
             gradientLayer.addSublayer(topHeadLayer)
             gradientLayer.addSublayer(topTailLayer)
-        } else {
+        case .radial:
             layer.addSublayer(radialGradientLayer)
             radialGradientLayer.addSublayer(topHeadLayer)
             radialGradientLayer.addSublayer(topTailLayer)
         }
+        
+        switch self.clockInteractionType {
+        case .exact:
+            overallPathLayer.addSublayer(exactTimeIndicatorTouchLayer)
+            overallPathLayer.addSublayer(titleTextLayer)
+            layer.addSublayer(overallPathLayer)
+            layer.addSublayer(exactTimeIndicatorLayer)
+        default:
+            overallPathLayer.addSublayer(pathLayer)
+            overallPathLayer.addSublayer(headLayer)
+            overallPathLayer.addSublayer(tailLayer)
+            overallPathLayer.addSublayer(titleTextLayer)
+            layer.addSublayer(overallPathLayer)
+        }
+        
+        
+        
         strokeColor = disabledFormattedColor(tintColor)
     }
     
@@ -359,8 +378,15 @@ public enum ClockInteractionType: String {
             updateRadialGradientLayer()
         }
         updateTrackLayerPath()
-        updatePathLayerPath()
-        updateHeadTailLayers()
+        
+        switch clockInteractionType {
+        case .exact:
+            updateSingleDialLayerPath()
+        default:
+            updatePathLayerPath()
+            updateHeadTailLayers()
+        }
+        
         updateWatchFaceTicks()
         updateWatchFaceNumerals()
         updateWatchFaceTitle()
@@ -370,13 +396,13 @@ public enum ClockInteractionType: String {
     
     func updateGradientLayer() {
         gradientLayer.colors = gradientColors.map(disabledFormattedColor).map{$0.cgColor}
-        gradientLayer.mask = overallPathLayer
+        gradientLayer.mask = trackLayer
         gradientLayer.startPoint = CGPoint(x:0,y:0)
         gradientLayer.locations = gradientLocations as [NSNumber]?
     }
     
     func updateRadialGradientLayer() {
-        radialGradientLayer.mask = overallPathLayer
+        radialGradientLayer.mask = trackLayer
         radialGradientLayer.radius = radialGradientLayer.size.width/2.0
         radialGradientLayer.colors = gradientColors.map(disabledFormattedColor).map{$0.cgColor}
         radialGradientLayer.locations = gradientLocations
@@ -385,7 +411,7 @@ public enum ClockInteractionType: String {
     func updateTrackLayerPath() {
         let circle = UIBezierPath(
             ovalIn: CGRect(
-                origin:CGPoint(x: 0, y: 00),
+                origin:CGPoint(x: 0, y: 0),
                 size: CGSize(width:trackLayer.size.width,
                     height: trackLayer.size.width)))
         trackLayer.lineWidth = pathWidth
@@ -451,6 +477,25 @@ public enum ClockInteractionType: String {
         topHeadLayer.addSublayer(endText)
         topTailLayer.addSublayer(stText)
     }
+    
+    func updateSingleDialLayerPath() {
+        let size = CGSize(width: 2 * buttonRadius, height: 2 * buttonRadius)
+        let iSize = CGSize(width: 2 * iButtonRadius, height: 2 * iButtonRadius)
+        let circle = UIBezierPath(ovalIn: CGRect(origin: CGPoint(x: 0, y:0), size: size)).cgPath
+        let iCircle = UIBezierPath(ovalIn: CGRect(origin: CGPoint(x: 0, y:0), size: iSize)).cgPath
+        
+        exactTimeIndicatorTouchLayer.path = circle
+        exactTimeIndicatorLayer.path = iCircle
+        
+        exactTimeIndicatorTouchLayer.size = size
+        exactTimeIndicatorLayer.size = iSize
+        
+        exactTimeIndicatorTouchLayer.position = headPoint
+        exactTimeIndicatorLayer.position = headPoint
+        
+        exactTimeIndicatorTouchLayer.fillColor = UIColor.yellow.cgColor
+        exactTimeIndicatorLayer.fillColor = UIColor.red.cgColor
+    }
 
 
     func updateWatchFaceNumerals() {
@@ -476,11 +521,17 @@ public enum ClockInteractionType: String {
     }
     
     func updateWatchFaceTitle() {
-        let f = UIFont.preferredFont(forTextStyle: UIFontTextStyle.title1)
-        let cgFont = CTFontCreateWithName(f.fontName as CFString?, f.pointSize/2,nil)
+        
+//        let titleLabel = UILabel(frame: CGRect(x: 0, y: 0, width: titleTextInset.size.width, height: titleTextInset.size.height))
+//        titleLabel.textAlignment = NSTextAlignment.center
+//        titleLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.title1)
+//        titleLabel.textColor = disabledFormattedColor(centerTextColor ?? tintColor)
+        
+        let titleFont = UIFont.preferredFont(forTextStyle: UIFontTextStyle.title1)
+        let cgFont = CTFontCreateWithName(titleFont.fontName as CFString?, titleFont.pointSize/2,nil)
 //        let titleTextLayer = CATextLayer()
-        titleTextLayer.bounds.size = CGSize( width: titleTextInset.size.width, height: 100)
-        titleTextLayer.fontSize = f.pointSize
+//        titleTextLayer.bounds.size = titleTextInset.size //CGSize( width: titleTextInset.size.width, height: 100)
+        titleTextLayer.fontSize = titleFont.pointSize
         titleTextLayer.alignmentMode = kCAAlignmentCenter
         titleTextLayer.foregroundColor = disabledFormattedColor(centerTextColor ?? tintColor).cgColor
         titleTextLayer.contentsScale = UIScreen.main.scale
@@ -489,7 +540,24 @@ public enum ClockInteractionType: String {
         //computedTailAngle +=  (headAngle > computedTailAngle ? twoPi : 0)
 //        let fiveMinIncrements = Int( ((tailAngle - headAngle) / twoPi) * CGFloat(clockHourTypeHours) /*hrs*/ * CGFloat(clockHourTypeHours) /*5min increments*/)
 //        titleTextLayer.string = "\(fiveMinIncrements / clockHourTypeHours)hr \((fiveMinIncrements % clockHourTypeHours) * 5)min"
-        titleTextLayer.string = "\(watchFaceDateFormatter.string(from: startDate))\n↓\n\(watchFaceDateFormatter.string(from: endDate))"
+        
+        var titleString: String;
+        switch clockInteractionType {
+        case .exact:
+//            titleLabel.text = "\(watchFaceDateFormatter.string(from: endDate))"
+             titleString = "\(watchFaceDateFormatter.string(from: endDate))"
+        default:
+//            titleLabel.text = "\(watchFaceDateFormatter.string(from: startDate))\n↓\n\(watchFaceDateFormatter.string(from: endDate))"
+            titleString = "\(watchFaceDateFormatter.string(from: startDate))\n↓\n\(watchFaceDateFormatter.string(from: endDate))"
+        }
+        
+        let titleRect = (titleString as NSString).boundingRect(with: titleTextInset.size, options: NSStringDrawingOptions.usesLineFragmentOrigin, attributes: [NSFontAttributeName: titleFont], context: nil)
+//        CGRect labelRect = [text boundingRectWithSize:view.bounds.size options:NSStringDrawingUsesLineFragmentOrigin attributes:@{ NSFontAttributeName : [UIFont fontWithName:@"HelveticaNeue" size:17.0] } context:nil];
+        
+//        titleLabel.sizeToFit()
+//        titleTextLayer = titleLabel.layer
+        titleTextLayer.string = titleString
+        titleTextLayer.bounds.size = titleRect.size
         titleTextLayer.position = layer.center
 
     }
@@ -542,7 +610,7 @@ public enum ClockInteractionType: String {
 //            superview.scrollEnabled = false
 //            break
 //        }
-
+        
         var prev = pointOfTouch
         let pointerMoverProducer: (@escaping (CGPoint) -> Angle, @escaping (Angle)->()) -> (CGPoint) -> () = { g, s in
             return { p in
@@ -558,6 +626,12 @@ public enum ClockInteractionType: String {
         }
 
         switch(layer){
+        case exactTimeIndicatorTouchLayer:
+            if (shouldMoveHead) {
+                pointMover = pointerMoverProducer({ _ in self.headAngle}, {self.headAngle += $0; self.tailAngle += 0})
+            } else {
+                pointMover = nil
+            }
         case headLayer:
             if (shouldMoveHead) {
                 pointMover = pointerMoverProducer({ _ in self.headAngle}, {self.headAngle += $0; self.tailAngle += 0})

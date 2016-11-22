@@ -303,7 +303,7 @@
                                                                     <real key="value" value="40"/>
                                                                 </userDefinedRuntimeAttribute>
                                                                 <userDefinedRuntimeAttribute type="string" keyPath="clockGradientName" value="radial"/>
-                                                                <userDefinedRuntimeAttribute type="string" keyPath="clockInteractionTypeName" value="singleRange"/>
+                                                                <userDefinedRuntimeAttribute type="string" keyPath="clockInteractionTypeName" value="exact"/>
                                                                 <userDefinedRuntimeAttribute type="string" keyPath="clockHourTypeName" value="24"/>
                                                             </userDefinedRuntimeAttributes>
                                                         </view>
