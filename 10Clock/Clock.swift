@@ -29,78 +29,130 @@ public enum ClockGradient: String {
     case radial = "radial"
 }
 
-public enum ClockType: Int {
+public enum ClockHourType: Int {
     case twelveHour = 12
     case twentyFourHour = 24
 }
+
+public enum ClockInteractionType: String {
+    case exact = "exact"
+    case singleRange = "singleRange"
+    case multiRange = "multiRange"
+}
+
+
 
 //XCPlaygroundPage.currentPage.needsIndefiniteExecution = true
 //@IBDesignable
 @IBDesignable open class TenClock : UIControl {
 
     open var delegate:TenClockDelegate?
-    //overall inset. Controls all sizes.
-    @IBInspectable var insetAmount: CGFloat = 40
-    var internalShift: CGFloat = 5
-    var pathWidth:CGFloat = 54
-
-    var timeStepSize: CGFloat = 5
-    let gradientLayer = CAGradientLayer()
-    let radialGradientLayer = RadialGradientLayer()
-    let trackLayer = CAShapeLayer()
-    let pathLayer = CAShapeLayer()
-    let headLayer = CAShapeLayer()
-    let tailLayer = CAShapeLayer()
-    let topHeadLayer = CAShapeLayer()
-    let topTailLayer = CAShapeLayer()
-    let numeralsLayer = CALayer()
-    let titleTextLayer = CATextLayer()
-    let overallPathLayer = CALayer()
-    let repLayer:CAReplicatorLayer = {
-        var r = CAReplicatorLayer()
-        r.instanceCount = 48
-        r.instanceTransform =
-            CATransform3DMakeRotation(
-                CGFloat(2*M_PI) / CGFloat(r.instanceCount),
-                0,0,1)
-
-        return r
-    }()
     
-    private let watchFaceDateFormatter : DateFormatter = {
-        var df = DateFormatter()
-        df.dateFormat = "HH:mm"
-        return df
-    }()
-
-    private var clockTypeHours : Int = 12
+    //MARK:- Public properties
+    open var startDate: Date{
+        get{return angleToTime(tailAngle) }
+        set{ tailAngle = timeToAngle(newValue) }
+    }
+    
+    open var endDate: Date{
+        get{return angleToTime(headAngle) }
+        set{ headAngle = timeToAngle(newValue) }
+    }
+    
+    open var clockInteractionType: ClockInteractionType = .exact
     
     open var gradientType: ClockGradient = .radial
     
-    open var clockType: ClockType = .twelveHour {
+    open var clockHourType: ClockHourType = .twelveHour {
         willSet {
             switch newValue {
             case .twelveHour:
-                clockTypeHours = 12
+                clockHourTypeHours = 12
             case .twentyFourHour:
-                clockTypeHours = 24
+                clockHourTypeHours = 24
+            }
+        }
+    }
+    open var pathWidth:CGFloat = 54
+    var timeStepSize: CGFloat = 5
+    var internalShift: CGFloat = 5
+    
+    open var shouldMoveHead = true
+    open var shouldMoveTail = true
+    
+    
+    open var numeralsColor:UIColor? = UIColor.darkGray
+    open var minorTicksColor:UIColor? = UIColor.lightGray
+    open var majorTicksColor:UIColor? = UIColor.blue
+    open var centerTextColor:UIColor? = UIColor.darkGray
+    
+    open var titleColor = UIColor.lightGray
+    open var titleGradientMask = false
+    
+    //disable scrol on closest superview for duration of a valid touch.
+    var disableSuperviewScroll = false
+    
+    open var headBackgroundColor = UIColor.white.withAlphaComponent(0.8)
+    open var tailBackgroundColor = UIColor.white.withAlphaComponent(0.8)
+    
+    open var headTextColor = UIColor.black
+    open var tailTextColor = UIColor.black
+    
+    open var gradientColors = [UIColor.orange, UIColor.yellow]
+    open var gradientLocations: [CGFloat] = [0.0, 1.0]
+    
+    open var minorTicksEnabled:Bool = true
+    open var majorTicksEnabled:Bool = true
+    @objc open var disabled:Bool = false {
+        didSet{
+            update()
+        }
+    }
+    
+    open var buttonInset:CGFloat = 2
+    
+    //overall inset. Controls all sizes.
+    @IBInspectable var insetAmount: CGFloat = 40
+    
+    //MARK:- @IBInspectable Adapters
+    @available(*, unavailable, message: "This property is reserved for Interface Builder. Use 'clockInteractionType' instead.")
+    @IBInspectable var clockInteractionTypeName: String? {
+        willSet {
+            clockInteractionType = ClockInteractionType(rawValue: newValue ?? "exact")!
+        }
+    }
+    
+    @available(*, unavailable, message: "This property is reserved for Interface Builder. Use 'gradientType' instead.")
+    @IBInspectable var clockGradientName: String? {
+        willSet {
+            gradientType = ClockGradient(rawValue: newValue ?? "linear")!
+        }
+    }
+    
+    @available(*, unavailable, message: "This property is reserved for Interface Builder. Use 'clockHourType' instead.")
+    @IBInspectable var clockHourTypeName: String? {
+        willSet {
+            if newValue == "12" || newValue == "24" {
+                clockHourType = ClockHourType(rawValue: Int(newValue!) ?? 12)!
+            } else {
+                clockHourType = .twelveHour
             }
         }
     }
     
-    let repLayer2:CAReplicatorLayer = {
-        var r = CAReplicatorLayer()
-        r.instanceCount = 24
-        r.instanceTransform =
-            CATransform3DMakeRotation(
-                CGFloat(2*M_PI) / CGFloat(r.instanceCount),
-                0,0,1)
-
-        return r
-    }()
-    
+    //MARK:- Constants
     let twoPi =  CGFloat(2 * M_PI)
     let fourPi =  CGFloat(4 * M_PI)
+    
+    //MARK:- Private properties
+    let watchFaceDateFormatter : DateFormatter = {
+        var df = DateFormatter()
+        df.dateFormat = "HH:mm"
+        return df
+    }()
+    
+    var clockHourTypeHours : Int = 12
+    
     var headAngle: CGFloat = 0 {
         didSet{
             if (headAngle > fourPi  +  CGFloat(M_PI_2)){
@@ -122,45 +174,23 @@ public enum ClockType: Int {
 
         }
     }
-
-    open var shouldMoveHead = true
-    open var shouldMoveTail = true
     
-    
-    open var numeralsColor:UIColor? = UIColor.darkGray
-    open var minorTicksColor:UIColor? = UIColor.lightGray
-    open var majorTicksColor:UIColor? = UIColor.blue
-    open var centerTextColor:UIColor? = UIColor.darkGray
-
-    open var titleColor = UIColor.lightGray
-    open var titleGradientMask = false
-
-    //disable scrol on closest superview for duration of a valid touch.
-    var disableSuperviewScroll = false
-
-    open var headBackgroundColor = UIColor.white.withAlphaComponent(0.8)
-    open var tailBackgroundColor = UIColor.white.withAlphaComponent(0.8)
-
-    open var headTextColor = UIColor.black
-    open var tailTextColor = UIColor.black
-    
-    open var gradientColors = [UIColor.orange, UIColor.yellow]
-    open var gradientLocations: [CGFloat] = [0.0, 1.0]
-
-    open var minorTicksEnabled:Bool = true
-    open var majorTicksEnabled:Bool = true
-    @objc open var disabled:Bool = false {
-        didSet{
-        		update()
+    var strokeColor: UIColor {
+        get {
+            return UIColor(cgColor: trackLayer.strokeColor!)
+        }
+        set(strokeColor) {
+            trackLayer.strokeColor = strokeColor.withAlphaComponent(0.1).cgColor
+            pathLayer.strokeColor = strokeColor.cgColor
         }
     }
     
-    open var buttonInset:CGFloat = 2
     func disabledFormattedColor(_ color:UIColor) -> UIColor{
         return disabled ? color.greyscale : color
     }
 
     var trackWidth:CGFloat {return pathWidth }
+    
     func proj(_ theta:Angle) -> CGPoint{
         let center = self.layer.center
         return CGPoint(x: center.x + trackRadius * cos(theta) ,
@@ -175,19 +205,9 @@ public enum ClockType: Int {
     }
 
     lazy internal var calendar = Calendar(identifier:Calendar.Identifier.gregorian)
+    
     func toDate(_ val:CGFloat)-> Date {
-//        var comps = DateComponents()
-//        comps.minute = Int(val)
         return calendar.date(byAdding: Calendar.Component.minute , value: Int(val), to: Date().startOfDay as Date)!
-//        return calendar.dateByAddingComponents(comps, toDate: Date().startOfDay as Date, options: .init(rawValue:0))!
-    }
-    open var startDate: Date{
-        get{return angleToTime(tailAngle) }
-        set{ tailAngle = timeToAngle(newValue) }
-    }
-    open var endDate: Date{
-        get{return angleToTime(headAngle) }
-        set{ headAngle = timeToAngle(newValue) }
     }
 
     var internalRadius:CGFloat {
@@ -211,37 +231,102 @@ public enum ClockType: Int {
     var trackRadius:CGFloat { return inset.height / 2}
     var buttonRadius:CGFloat { return /*44*/ pathWidth / 2 }
     var iButtonRadius:CGFloat { return /*44*/ buttonRadius - buttonInset }
-    var strokeColor: UIColor {
-        get {
-            return UIColor(cgColor: trackLayer.strokeColor!)
-        }
-        set(strokeColor) {
-            trackLayer.strokeColor = strokeColor.withAlphaComponent(0.1).cgColor
-            pathLayer.strokeColor = strokeColor.cgColor
-        }
+    
+    //MARK:- Layers
+    let gradientLayer = CAGradientLayer()
+    let radialGradientLayer = RadialGradientLayer()
+    let trackLayer = CAShapeLayer()
+    let pathLayer = CAShapeLayer()
+    let headLayer = CAShapeLayer()
+    let tailLayer = CAShapeLayer()
+    let topHeadLayer = CAShapeLayer()
+    let topTailLayer = CAShapeLayer()
+    let numeralsLayer = CALayer()
+    let titleTextLayer = CATextLayer()
+    let overallPathLayer = CALayer()
+    
+    let repLayer:CAReplicatorLayer = {
+        var r = CAReplicatorLayer()
+        r.instanceCount = 48
+        r.instanceTransform =
+            CATransform3DMakeRotation(
+                CGFloat(2*M_PI) / CGFloat(r.instanceCount),
+                0,0,1)
+        
+        return r
+    }()
+    
+    let repLayer2:CAReplicatorLayer = {
+        var r = CAReplicatorLayer()
+        r.instanceCount = 24
+        r.instanceTransform =
+            CATransform3DMakeRotation(
+                CGFloat(2*M_PI) / CGFloat(r.instanceCount),
+                0,0,1)
+        
+        return r
+    }()
+
+    //MARK:- Initialisation and setup
+    override public init(frame: CGRect) {
+        super.init(frame:frame)
+        setup()
     }
-
-
-    // input a date, output: 0 to 4pi
-    func timeToAngle(_ date: Date) -> Angle{
-        let units : Set<Calendar.Component> = [.hour, .minute]
-        let components = self.calendar.dateComponents(units, from: date)
-        let min = Double(  60 * components.hour! + components.minute! )
-
-        return medStepFunction(CGFloat(M_PI_2 - ( min / (Double(clockTypeHours) * 60)) * 2 * M_PI), stepSize: CGFloat( 2 * M_PI / (Double(clockTypeHours) * 60 / 5)))
+    
+    init(frame: CGRect, clockHourType: ClockHourType, gradientType: ClockGradient = .linear) {
+        super.init(frame: frame)
+        self.gradientType = gradientType
+        self.clockHourType = clockHourType
+        setup()
     }
-
-    // input an angle, output: 0 to 4pi
-    func angleToTime(_ angle: Angle) -> Date{
-        let dAngle = Double(angle)
-        let min = CGFloat(((M_PI_2 - dAngle) / (2 * M_PI)) * (Double(clockTypeHours) * 60))
-        let startOfToday = Calendar.current.startOfDay(for: Date())
-        return self.calendar.date(byAdding: .minute, value: Int(medStepFunction(min, stepSize: 5/* minute steps*/)), to: startOfToday)!
+    
+    required public init?(coder: NSCoder) {
+        super.init(coder: coder)
     }
-    override open func prepareForInterfaceBuilder() {
-        super.prepareForInterfaceBuilder()
+    
+    open override func awakeFromNib() {
+        super.awakeFromNib()
+        setup()
+    }
+    
+    func setup() {
+        print("Setup Layers")
+        // Check if we're drawing 12 hour or 24 hour clock
+        self.clockHourTypeHours = self.clockHourType.rawValue
+        
+        backgroundColor = UIColor ( red: 0.1149, green: 0.115, blue: 0.1149, alpha: 0.0 )
+        
+        // Create the sublayers that make up the clock
+        createSublayers()
+        // Update all the layers
         update()
     }
+    
+    func createSublayers() {
+        layer.addSublayer(repLayer2)
+        layer.addSublayer(repLayer)
+        layer.addSublayer(numeralsLayer)
+        layer.addSublayer(trackLayer)
+        
+        overallPathLayer.addSublayer(pathLayer)
+        overallPathLayer.addSublayer(headLayer)
+        overallPathLayer.addSublayer(tailLayer)
+        overallPathLayer.addSublayer(titleTextLayer)
+        layer.addSublayer(overallPathLayer)
+        
+        if self.gradientType == .linear {
+            layer.addSublayer(gradientLayer)
+            gradientLayer.addSublayer(topHeadLayer)
+            gradientLayer.addSublayer(topTailLayer)
+        } else {
+            layer.addSublayer(radialGradientLayer)
+            radialGradientLayer.addSublayer(topHeadLayer)
+            radialGradientLayer.addSublayer(topTailLayer)
+        }
+        strokeColor = disabledFormattedColor(tintColor)
+    }
+    
+    //MARK:- Update cycle
     open func update() {
         let mm = min(self.layer.bounds.size.height, self.layer.bounds.size.width)
         CATransaction.begin()
@@ -282,6 +367,7 @@ public enum ClockType: Int {
         CATransaction.commit()
 
     }
+    
     func updateGradientLayer() {
         gradientLayer.colors = gradientColors.map(disabledFormattedColor).map{$0.cgColor}
         gradientLayer.mask = overallPathLayer
@@ -306,14 +392,11 @@ public enum ClockType: Int {
         trackLayer.path = circle.cgPath
 
     }
-    override open func layoutSubviews() {
-        update()
-    }
+    
     func updatePathLayerPath() {
         let arcCenter = pathLayer.center
         pathLayer.fillColor = UIColor.clear.cgColor
         pathLayer.lineWidth = pathWidth
-//        print("start = \(headAngle / CGFloat(M_PI)), end = \(tailAngle / CGFloat(M_PI))")
         pathLayer.path = UIBezierPath(
             arcCenter: arcCenter,
             radius: trackRadius,
@@ -323,7 +406,7 @@ public enum ClockType: Int {
     }
 
 
-    func tlabel(_ str:String, color:UIColor? = nil) -> CATextLayer{
+    func tlabel(_ str:String, color:UIColor? = nil) -> CATextLayer {
         let f = UIFont.preferredFont(forTextStyle: UIFontTextStyle.caption2)
         let cgFont = CTFontCreateWithName(f.fontName as CFString?, f.pointSize/2,nil)
         let l = CATextLayer()
@@ -337,6 +420,7 @@ public enum ClockType: Int {
 
         return l
     }
+    
     func updateHeadTailLayers() {
         let size = CGSize(width: 2 * buttonRadius, height: 2 * buttonRadius)
         let iSize = CGSize(width: 2 * iButtonRadius, height: 2 * iButtonRadius)
@@ -375,8 +459,8 @@ public enum ClockType: Int {
         let cgFont = CTFontCreateWithName(f.fontName as CFString?, f.pointSize/2,nil)
         let startPos = CGPoint(x: numeralsLayer.bounds.midX, y: 15)
         let origin = numeralsLayer.center
-        let step = (2 * M_PI) / Double(clockTypeHours)
-        for i in (1 ... clockTypeHours){
+        let step = (2 * M_PI) / Double(clockHourTypeHours)
+        for i in (1 ... clockHourTypeHours){
             let l = CATextLayer()
             l.bounds.size = CGSize(width: i > 9 ? 18 : 8, height: 15)
             l.fontSize = f.pointSize
@@ -390,7 +474,8 @@ public enum ClockType: Int {
             numeralsLayer.addSublayer(l)
         }
     }
-    func updateWatchFaceTitle(){
+    
+    func updateWatchFaceTitle() {
         let f = UIFont.preferredFont(forTextStyle: UIFontTextStyle.title1)
         let cgFont = CTFontCreateWithName(f.fontName as CFString?, f.pointSize/2,nil)
 //        let titleTextLayer = CATextLayer()
@@ -402,12 +487,13 @@ public enum ClockType: Int {
         titleTextLayer.font = cgFont
         //var computedTailAngle = tailAngle //+ (headAngle > tailAngle ? twoPi : 0)
         //computedTailAngle +=  (headAngle > computedTailAngle ? twoPi : 0)
-//        let fiveMinIncrements = Int( ((tailAngle - headAngle) / twoPi) * CGFloat(clockTypeHours) /*hrs*/ * CGFloat(clockTypeHours) /*5min increments*/)
-//        titleTextLayer.string = "\(fiveMinIncrements / clockTypeHours)hr \((fiveMinIncrements % clockTypeHours) * 5)min"
+//        let fiveMinIncrements = Int( ((tailAngle - headAngle) / twoPi) * CGFloat(clockHourTypeHours) /*hrs*/ * CGFloat(clockHourTypeHours) /*5min increments*/)
+//        titleTextLayer.string = "\(fiveMinIncrements / clockHourTypeHours)hr \((fiveMinIncrements % clockHourTypeHours) * 5)min"
         titleTextLayer.string = "\(watchFaceDateFormatter.string(from: startDate))\n↓\n\(watchFaceDateFormatter.string(from: endDate))"
         titleTextLayer.position = layer.center
 
     }
+    
     func tick() -> CAShapeLayer{
         let tick = CAShapeLayer()
         let path = UIBezierPath()
@@ -436,88 +522,10 @@ public enum ClockType: Int {
         repLayer2.position = self.bounds.center
         repLayer2.bounds.size = self.internalInset.size
     }
-    var pointerLength:CGFloat = 0.0
 
-    func createSublayers() {
-        layer.addSublayer(repLayer2)
-        layer.addSublayer(repLayer)
-        layer.addSublayer(numeralsLayer)
-        layer.addSublayer(trackLayer)
-
-        overallPathLayer.addSublayer(pathLayer)
-        overallPathLayer.addSublayer(headLayer)
-        overallPathLayer.addSublayer(tailLayer)
-        overallPathLayer.addSublayer(titleTextLayer)
-        layer.addSublayer(overallPathLayer)
-
-        if self.gradientType == .linear {
-            layer.addSublayer(gradientLayer)
-            gradientLayer.addSublayer(topHeadLayer)
-            gradientLayer.addSublayer(topTailLayer)
-        } else {
-            layer.addSublayer(radialGradientLayer)
-            radialGradientLayer.addSublayer(topHeadLayer)
-            radialGradientLayer.addSublayer(topTailLayer)
-        }
-        update()
-        strokeColor = disabledFormattedColor(tintColor)
-    }
-    override public init(frame: CGRect) {
-        super.init(frame:frame)
-//        self.addConstraint(NSLayoutConstraint(item: self, attribute: .Width, relatedBy: .Equal, toItem: self	, attribute: .Height, multiplier: 1, constant: 0))
-       // tintColor = UIColor ( red: 0.755, green: 0.0, blue: 1.0, alpha: 1.0 )
-        backgroundColor = UIColor ( red: 0.1149, green: 0.115, blue: 0.1149, alpha: 0.0 )
-        createSublayers()
-    }
-    
-    init(frame: CGRect, clockType: ClockType, gradientType: ClockGradient = .linear) {
-        super.init(frame: frame)
-        switch clockType {
-        case .twelveHour:
-            self.clockTypeHours = 12
-        case .twentyFourHour:
-            self.clockTypeHours = 24
-        }
-        self.gradientType = gradientType
-    }
-
-    required public init?(coder: NSCoder) {
-        super.init(coder: coder)
-
-        //tintColor = UIColor ( red: 0.755, green: 0.0, blue: 1.0, alpha: 1.0 )
-        backgroundColor = UIColor ( red: 0.1149, green: 0.115, blue: 0.1149, alpha: 0.0 )
-        createSublayers()
-    }
-
-
-    fileprivate var backingValue: Float = 0.0
-
-    /** Contains the receiver’s current value. */
-    var value: Float {
-        get { return backingValue }
-        set { setValue(newValue, animated: false) }
-    }
-
-    /** Sets the receiver’s current value, allowing you to animate the change visually. */
-    func setValue(_ value: Float, animated: Bool) {
-        if value != backingValue {
-            backingValue = min(maximumValue, max(minimumValue, value))
-        }
-    }
-
-    /** Contains the minimum value of the receiver. */
-    var minimumValue: Float = 0.0
-
-    /** Contains the maximum value of the receiver. */
-    var maximumValue: Float = 1.0
-
-    /** Contains a Boolean value indicating whether changes
-     in the sliders value generate continuous update events. */
-    var continuous = true
-    var valueChanged = false
-
-
+    //MARK:- Touch interaction
     var pointMover:((CGPoint) ->())?
+    
     override open func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard !disabled  else {
         		pointMover = nil
@@ -579,6 +587,7 @@ public enum ClockType: Int {
 
 
     }
+    
     override open  func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
 //        while var superview = self.superview{
 //            guard let superview = superview as? UIScrollView else {  continue }
@@ -586,6 +595,7 @@ public enum ClockType: Int {
 //            break
 //        }
     }
+    
     override open func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         pointMover = nil
 //        while var superview = self.superview{
@@ -597,6 +607,7 @@ public enum ClockType: Int {
 //        valueChanged = false
         delegate?.timesChanged?(self, startDate: self.startDate, endDate: endDate)
     }
+    
     override open func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first, let pointMover = pointMover else { return }
 //        print(touch.locationInView(self))
@@ -606,5 +617,32 @@ public enum ClockType: Int {
         
 
     }
+    
+    //MARK:- UIView overrides
+    override open func layoutSubviews() {
+        update()
+    }
+    
+    override open func prepareForInterfaceBuilder() {
+        super.prepareForInterfaceBuilder()
+        update()
+    }
 
+    //MARK:- Helper functions
+    // input a date, output: 0 to 4pi
+    func timeToAngle(_ date: Date) -> Angle{
+        let units : Set<Calendar.Component> = [.hour, .minute]
+        let components = self.calendar.dateComponents(units, from: date)
+        let min = Double(  60 * components.hour! + components.minute! )
+        
+        return medStepFunction(CGFloat(M_PI_2 - ( min / (Double(clockHourTypeHours) * 60)) * 2 * M_PI), stepSize: CGFloat( 2 * M_PI / (Double(clockHourTypeHours) * 60 / 5)))
+    }
+    
+    // input an angle, output: 0 to 4pi
+    func angleToTime(_ angle: Angle) -> Date{
+        let dAngle = Double(angle)
+        let min = CGFloat(((M_PI_2 - dAngle) / (2 * M_PI)) * (Double(clockHourTypeHours) * 60))
+        let startOfToday = Calendar.current.startOfDay(for: Date())
+        return self.calendar.date(byAdding: .minute, value: Int(medStepFunction(min, stepSize: 5/* minute steps*/)), to: startOfToday)!
+    }
 }

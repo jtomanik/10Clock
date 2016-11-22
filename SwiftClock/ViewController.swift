@@ -90,10 +90,8 @@ class ViewController: UITableViewController, TenClockDelegate {
         clock.startDate = Date().dateToNearestNextHalfHour()
         // Set the default end date to be 3 hours from the start
         clock.endDate = Date(timeInterval: 3*60*60, since: clock.startDate)
-        
         clock.gradientColors = [UIColor.red, UIColor.blue]
         clock.gradientLocations = [0.5, 1.0]
-        clock.clockType = .twentyFourHour
         clock.delegate = self
     }
     override func viewWillAppear(_ animated: Bool) {
