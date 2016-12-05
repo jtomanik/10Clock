@@ -40,8 +40,6 @@ public enum ClockInteractionType: String {
     case multiRange = "multiRange"
 }
 
-
-
 //XCPlaygroundPage.currentPage.needsIndefiniteExecution = true
 //@IBDesignable
 @IBDesignable open class TenClock : UIControl {
@@ -249,6 +247,7 @@ public enum ClockInteractionType: String {
     
     // The invisible trigger for user interaction
     let exactTimeIndicatorTouchLayer = CAShapeLayer()
+    
     // The shape that is displayed
     let exactTimeIndicatorLayer = CAShapeLayer()
     
@@ -522,40 +521,23 @@ public enum ClockInteractionType: String {
     
     func updateWatchFaceTitle() {
         
-//        let titleLabel = UILabel(frame: CGRect(x: 0, y: 0, width: titleTextInset.size.width, height: titleTextInset.size.height))
-//        titleLabel.textAlignment = NSTextAlignment.center
-//        titleLabel.font = UIFont.preferredFont(forTextStyle: UIFontTextStyle.title1)
-//        titleLabel.textColor = disabledFormattedColor(centerTextColor ?? tintColor)
-        
         let titleFont = UIFont.preferredFont(forTextStyle: UIFontTextStyle.title1)
         let cgFont = CTFontCreateWithName(titleFont.fontName as CFString?, titleFont.pointSize/2,nil)
-//        let titleTextLayer = CATextLayer()
-//        titleTextLayer.bounds.size = titleTextInset.size //CGSize( width: titleTextInset.size.width, height: 100)
         titleTextLayer.fontSize = titleFont.pointSize
         titleTextLayer.alignmentMode = kCAAlignmentCenter
         titleTextLayer.foregroundColor = disabledFormattedColor(centerTextColor ?? tintColor).cgColor
         titleTextLayer.contentsScale = UIScreen.main.scale
         titleTextLayer.font = cgFont
-        //var computedTailAngle = tailAngle //+ (headAngle > tailAngle ? twoPi : 0)
-        //computedTailAngle +=  (headAngle > computedTailAngle ? twoPi : 0)
-//        let fiveMinIncrements = Int( ((tailAngle - headAngle) / twoPi) * CGFloat(clockHourTypeHours) /*hrs*/ * CGFloat(clockHourTypeHours) /*5min increments*/)
-//        titleTextLayer.string = "\(fiveMinIncrements / clockHourTypeHours)hr \((fiveMinIncrements % clockHourTypeHours) * 5)min"
         
         var titleString: String;
         switch clockInteractionType {
         case .exact:
-//            titleLabel.text = "\(watchFaceDateFormatter.string(from: endDate))"
              titleString = "\(watchFaceDateFormatter.string(from: endDate))"
         default:
-//            titleLabel.text = "\(watchFaceDateFormatter.string(from: startDate))\n↓\n\(watchFaceDateFormatter.string(from: endDate))"
             titleString = "\(watchFaceDateFormatter.string(from: startDate))\n↓\n\(watchFaceDateFormatter.string(from: endDate))"
         }
         
         let titleRect = (titleString as NSString).boundingRect(with: titleTextInset.size, options: NSStringDrawingOptions.usesLineFragmentOrigin, attributes: [NSFontAttributeName: titleFont], context: nil)
-//        CGRect labelRect = [text boundingRectWithSize:view.bounds.size options:NSStringDrawingUsesLineFragmentOrigin attributes:@{ NSFontAttributeName : [UIFont fontWithName:@"HelveticaNeue" size:17.0] } context:nil];
-        
-//        titleLabel.sizeToFit()
-//        titleTextLayer = titleLabel.layer
         titleTextLayer.string = titleString
         titleTextLayer.bounds.size = titleRect.size
         titleTextLayer.position = layer.center
@@ -594,22 +576,23 @@ public enum ClockInteractionType: String {
     //MARK:- Touch interaction
     var pointMover:((CGPoint) ->())?
     
+//    open override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+//        return super.hitTest(point, with: event)
+//    }
+    
+//    open override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+//        return true
+//    }
+    
     override open func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard !disabled  else {
         		pointMover = nil
             return
         }
         
-        //        touches.forEach { (touch) in
         let touch = touches.first!
         let pointOfTouch = touch.location(in: self)
         guard let layer = self.overallPathLayer.hitTest( pointOfTouch ) else { return }
-//         superview:UIView
-//        while let superview = touch.gestureRecognizers{
-//            guard let superview = superview as? UIPanGestureRecognizer else {  continue }
-//            superview.scrollEnabled = false
-//            break
-//        }
         
         var prev = pointOfTouch
         let pointerMoverProducer: (@escaping (CGPoint) -> Angle, @escaping (Angle)->()) -> (CGPoint) -> () = { g, s in
@@ -658,38 +641,25 @@ public enum ClockInteractionType: String {
         default: break
         }
 
-
+        super.touchesBegan(touches, with: event)
 
     }
     
     override open  func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-//        while var superview = self.superview{
-//            guard let superview = superview as? UIScrollView else {  continue }
-//            superview.scrollEnabled = true
-//            break
-//        }
+        super.touchesCancelled(touches, with: event)
     }
     
     override open func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         pointMover = nil
-//        while var superview = self.superview{
-//            guard let superview = superview as? UIScrollView else {  continue }
-//            superview.scrollEnabled = true
-//            break
-//        }
-//        do something
-//        valueChanged = false
         delegate?.timesChanged?(self, startDate: self.startDate, endDate: endDate)
+        super.touchesEnded(touches, with: event)
     }
     
     override open func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first, let pointMover = pointMover else { return }
-//        print(touch.locationInView(self))
         pointMover(touch.location(in: self))
-        
     	delegate?.timesUpdated?(self, startDate: self.startDate, endDate: endDate)
-        
-
+        super.touchesMoved(touches, with: event)
     }
     
     //MARK:- UIView overrides
@@ -714,7 +684,7 @@ public enum ClockInteractionType: String {
         return medStepFunction(CGFloat(M_PI_2 - ( min / (Double(clockHourTypeHours) * 60)) * 2 * M_PI), stepSize: CGFloat( 2 * M_PI / (Double(clockHourTypeHours) * 60 / 5)))
     }
     
-    // input an angle, output: 0 to 4pi
+    // input an angle, output: Date
     func angleToTime(_ angle: Angle) -> Date{
         let dAngle = Double(angle)
         let min = CGFloat(((M_PI_2 - dAngle) / (2 * M_PI)) * (Double(clockHourTypeHours) * 60))

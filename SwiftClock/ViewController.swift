@@ -87,6 +87,8 @@ class ViewController: UITableViewController, TenClockDelegate {
         // Do any additional setup after loading the view, typically from a nib.
         tableView.contentInset = UIEdgeInsets(top: 20, left: 0, bottom: 0, right: 0)
         
+//        tableView.delaysContentTouches = false
+        
         clock.startDate = Date().dateToNearestNextHalfHour()
         // Set the default end date to be 3 hours from the start
         clock.endDate = Date(timeInterval: 3*60*60, since: clock.startDate)
@@ -113,7 +115,6 @@ class ViewController: UITableViewController, TenClockDelegate {
         
         
     }
-
     
     override func didRotate(from fromInterfaceOrientation: UIInterfaceOrientation) {
         refresh()
