@@ -584,6 +584,17 @@ public enum ClockInteractionType: String {
 //        return true
 //    }
     
+    open override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        guard let _ = self.trackLayer.hitTest( point ) else {
+            return nil
+        }
+        if let _ = self.titleTextLayer.hitTest( point ) {
+            return nil
+        } else {
+            return self
+        }
+    }
+    
     override open func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard !disabled  else {
         		pointMover = nil
