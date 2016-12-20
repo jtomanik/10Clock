@@ -54,7 +54,14 @@ class ViewController: UITableViewController, TenClockDelegate {
         clock.disabled = !clock.disabled
     }
     @IBAction func gradientValueChanged(_ sender: AnyObject) {
-        
+        switch clock.clockInteractionType {
+        case .exact:
+            clock.clockInteractionType = .singleRange
+        case .singleRange:
+            clock.clockInteractionType = .multiRange
+        case .multiRange:
+            clock.clockInteractionType = .exact
+        }
     }
     @IBOutlet var cells: [UITableViewCell]!
     @IBOutlet var labels: [UILabel]!
