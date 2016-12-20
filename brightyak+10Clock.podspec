@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
   #
 
   s.name         = "brightyak+10Clock"
-  s.version      = "0.0.20"
+  s.version      = "0.0.21"
   s.summary      = "Beautiful iOS Time Picker inspired by the ios 10 \"Bedtime\" Timer."
 
   # This description is used to generate tags and improve search results.
