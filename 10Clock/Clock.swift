@@ -478,7 +478,7 @@ public enum ClockInteractionType: String {
     
     func updateHeadTailLayers() {
         let size = CGSize(width: 2 * buttonRadius, height: 2 * buttonRadius)
-        let iSize = CGSize(width: 2 * iButtonRadius, height: 2 * iButtonRadius)
+//        let iSize = CGSize(width: 2 * iButtonRadius, height: 2 * iButtonRadius)
         let circle = UIBezierPath(ovalIn: CGRect(origin: CGPoint(x: 0, y:0), size: size)).cgPath
         tailLayer.path = circle
         headLayer.path = circle
