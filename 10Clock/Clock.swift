@@ -71,6 +71,10 @@ public enum ClockInteractionType: String {
             }
         }
     }
+    
+    open var clockFaceFont = UIFont.preferredFont(forTextStyle: UIFontTextStyle.title1)
+    open var clockNumeralsFont = UIFont.preferredFont(forTextStyle: UIFontTextStyle.caption2)
+    
     open var pathWidth:CGFloat = 54
     var timeStepSize: CGFloat = 5
     var internalShift: CGFloat = 5
@@ -432,11 +436,10 @@ public enum ClockInteractionType: String {
 
 
     func tlabel(_ str:String, color:UIColor? = nil) -> CATextLayer {
-        let f = UIFont.preferredFont(forTextStyle: UIFontTextStyle.caption2)
-        let cgFont = CTFontCreateWithName(f.fontName as CFString?, f.pointSize/2,nil)
+        let cgFont = CTFontCreateWithName(self.clockNumeralsFont.fontName as CFString?, self.clockNumeralsFont.pointSize/2,nil)
         let l = CATextLayer()
         l.bounds.size = CGSize(width: 30, height: 15)
-        l.fontSize = f.pointSize
+        l.fontSize = self.clockNumeralsFont.pointSize
         l.foregroundColor =  disabledFormattedColor(color ?? tintColor).cgColor
         l.alignmentMode = kCAAlignmentCenter
         l.contentsScale = UIScreen.main.scale
@@ -499,15 +502,14 @@ public enum ClockInteractionType: String {
 
     func updateWatchFaceNumerals() {
         numeralsLayer.sublayers?.forEach({$0.removeFromSuperlayer()})
-        let f = UIFont.preferredFont(forTextStyle: UIFontTextStyle.caption2)
-        let cgFont = CTFontCreateWithName(f.fontName as CFString?, f.pointSize/2,nil)
+        let cgFont = CTFontCreateWithName(self.clockNumeralsFont.fontName as CFString?, self.clockNumeralsFont.pointSize/2,nil)
         let startPos = CGPoint(x: numeralsLayer.bounds.midX, y: 15)
         let origin = numeralsLayer.center
         let step = (2 * M_PI) / Double(clockHourTypeHours)
         for i in (1 ... clockHourTypeHours){
             let l = CATextLayer()
             l.bounds.size = CGSize(width: i > 9 ? 18 : 8, height: 15)
-            l.fontSize = f.pointSize
+            l.fontSize = self.clockNumeralsFont.pointSize
             l.alignmentMode = kCAAlignmentCenter
             l.contentsScale = UIScreen.main.scale
             //            l.foregroundColor
@@ -521,9 +523,8 @@ public enum ClockInteractionType: String {
     
     func updateWatchFaceTitle() {
         
-        let titleFont = UIFont.preferredFont(forTextStyle: UIFontTextStyle.title1)
-        let cgFont = CTFontCreateWithName(titleFont.fontName as CFString?, titleFont.pointSize/2,nil)
-        titleTextLayer.fontSize = titleFont.pointSize
+        let cgFont = CTFontCreateWithName(self.clockFaceFont.fontName as CFString?, self.clockFaceFont.pointSize/2,nil)
+        titleTextLayer.fontSize = self.clockFaceFont.pointSize
         titleTextLayer.alignmentMode = kCAAlignmentCenter
         titleTextLayer.foregroundColor = disabledFormattedColor(centerTextColor ?? tintColor).cgColor
         titleTextLayer.contentsScale = UIScreen.main.scale
@@ -537,7 +538,7 @@ public enum ClockInteractionType: String {
             titleString = "\(watchFaceDateFormatter.string(from: startDate))\n↓\n\(watchFaceDateFormatter.string(from: endDate))"
         }
         
-        let titleRect = (titleString as NSString).boundingRect(with: titleTextInset.size, options: NSStringDrawingOptions.usesLineFragmentOrigin, attributes: [NSFontAttributeName: titleFont], context: nil)
+        let titleRect = (titleString as NSString).boundingRect(with: titleTextInset.size, options: NSStringDrawingOptions.usesLineFragmentOrigin, attributes: [NSFontAttributeName: self.clockFaceFont], context: nil)
         titleTextLayer.string = titleString
         titleTextLayer.bounds.size = titleRect.size
         titleTextLayer.position = layer.center
