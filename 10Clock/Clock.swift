@@ -332,14 +332,14 @@ public enum ClockInteractionType: String {
         switch self.clockInteractionType {
         case .exact:
             overallPathLayer.addSublayer(exactTimeIndicatorTouchLayer)
-            overallPathLayer.addSublayer(titleTextLayer)
+            layer.addSublayer(titleTextLayer)
             layer.addSublayer(overallPathLayer)
             layer.addSublayer(exactTimeIndicatorLayer)
         default:
             overallPathLayer.addSublayer(pathLayer)
             overallPathLayer.addSublayer(headLayer)
             overallPathLayer.addSublayer(tailLayer)
-            overallPathLayer.addSublayer(titleTextLayer)
+            layer.addSublayer(titleTextLayer)
             layer.addSublayer(overallPathLayer)
         }
         
@@ -399,13 +399,13 @@ public enum ClockInteractionType: String {
     
     func updateGradientLayer() {
         gradientLayer.colors = gradientColors.map(disabledFormattedColor).map{$0.cgColor}
-        gradientLayer.mask = trackLayer
+        gradientLayer.mask = overallPathLayer
         gradientLayer.startPoint = CGPoint(x:0,y:0)
         gradientLayer.locations = gradientLocations as [NSNumber]?
     }
     
     func updateRadialGradientLayer() {
-        radialGradientLayer.mask = trackLayer
+        radialGradientLayer.mask = overallPathLayer
         radialGradientLayer.radius = radialGradientLayer.size.width/2.0
         radialGradientLayer.colors = gradientColors.map(disabledFormattedColor).map{$0.cgColor}
         radialGradientLayer.locations = gradientLocations
@@ -495,8 +495,8 @@ public enum ClockInteractionType: String {
         exactTimeIndicatorTouchLayer.position = headPoint
         exactTimeIndicatorLayer.position = headPoint
         
-        exactTimeIndicatorTouchLayer.fillColor = UIColor.yellow.cgColor
-        exactTimeIndicatorLayer.fillColor = UIColor.red.cgColor
+//        exactTimeIndicatorTouchLayer.fillColor = UIColor.clear.cgColor
+        exactTimeIndicatorLayer.fillColor = UIColor.clear.cgColor
     }
 
 
