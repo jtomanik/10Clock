@@ -57,7 +57,11 @@ public enum ClockInteractionType: String {
         set{ headAngle = timeToAngle(newValue) }
     }
     
-    open var clockInteractionType: ClockInteractionType = .exact
+    open var clockInteractionType: ClockInteractionType = .exact {
+        didSet {
+            self.setup()
+        }
+    }
     
     open var gradientType: ClockGradient = .radial
     
@@ -103,7 +107,7 @@ public enum ClockInteractionType: String {
     open var gradientColors = [UIColor.orange, UIColor.yellow]
     open var gradientLocations: [CGFloat] = [0.0, 1.0]
     
-    open var trackGradientColors = [UIColor.darkGray, UIColor.lightGray]
+    open var trackGradientColors = [UIColor.black, UIColor(red:200.0/255.0, green:200.0/255.0, blue:200.0/255.0, alpha:1.0)]
     open var trackGradientLocations: [CGFloat] = [0.0, 1.0]
     
     open var minorTicksEnabled:Bool = true
@@ -238,18 +242,18 @@ public enum ClockInteractionType: String {
     var iButtonRadius:CGFloat { return /*44*/ buttonRadius - buttonInset }
     
     //MARK:- Layers
-    let gradientLayer = CAGradientLayer()
-    let radialGradientLayer = RadialGradientLayer()
-    let trackRadialGradientLayer = RadialGradientLayer()
+    var gradientLayer = CAGradientLayer()
+    var radialGradientLayer = RadialGradientLayer()
+    var trackRadialGradientLayer = RadialGradientLayer()
     let trackLayer = CAShapeLayer()
     let pathLayer = CAShapeLayer()
     let headLayer = CAShapeLayer()
     let tailLayer = CAShapeLayer()
-    let topHeadLayer = CAShapeLayer()
-    let topTailLayer = CAShapeLayer()
+    var topHeadLayer = CAShapeLayer()
+    var topTailLayer = CAShapeLayer()
     let numeralsLayer = CALayer()
     var titleTextLayer = CATextLayer()
-    let overallPathLayer = CALayer()
+    var overallPathLayer = CALayer()
     
     let exactTitleTextLayer = CATextLayer()
     
@@ -304,6 +308,17 @@ public enum ClockInteractionType: String {
     }
     
     func setup() {
+        
+        // Clear all existing layers
+        self.gradientLayer.sublayers?.forEach { $0.removeFromSuperlayer() }
+        self.gradientLayer = CAGradientLayer()
+        self.radialGradientLayer.sublayers?.forEach { $0.removeFromSuperlayer() }
+        self.radialGradientLayer = RadialGradientLayer()
+        self.overallPathLayer.sublayers?.forEach { $0.removeFromSuperlayer() }
+        self.overallPathLayer = CALayer()
+        self.layer.sublayers?.forEach { $0.removeFromSuperlayer() }
+        self.topHeadLayer = CAShapeLayer()
+        self.topTailLayer = CAShapeLayer()
         // Check if we're drawing 12 hour or 24 hour clock
         self.clockHourTypeHours = self.clockHourType.rawValue
         
@@ -317,8 +332,8 @@ public enum ClockInteractionType: String {
     }
     
     func createSublayers() {
-        layer.addSublayer(repLayer2)
-        layer.addSublayer(repLayer)
+//        layer.addSublayer(repLayer2)
+//        layer.addSublayer(repLayer)
         layer.addSublayer(numeralsLayer)
         layer.addSublayer(trackLayer)
         layer.addSublayer(trackRadialGradientLayer)
@@ -326,12 +341,12 @@ public enum ClockInteractionType: String {
         switch self.gradientType {
         case .linear:
             layer.addSublayer(gradientLayer)
-            gradientLayer.addSublayer(topHeadLayer)
-            gradientLayer.addSublayer(topTailLayer)
+//            gradientLayer.addSublayer(topHeadLayer)
+//            gradientLayer.addSublayer(topTailLayer)
         case .radial:
             layer.addSublayer(radialGradientLayer)
-            radialGradientLayer.addSublayer(topHeadLayer)
-            radialGradientLayer.addSublayer(topTailLayer)
+//            radialGradientLayer.addSublayer(topHeadLayer)
+//            radialGradientLayer.addSublayer(topTailLayer)
         }
         
         switch self.clockInteractionType {
@@ -347,8 +362,6 @@ public enum ClockInteractionType: String {
             layer.addSublayer(titleTextLayer)
             layer.addSublayer(overallPathLayer)
         }
-        
-        
         
         strokeColor = disabledFormattedColor(tintColor)
     }
@@ -397,7 +410,7 @@ public enum ClockInteractionType: String {
             updateHeadTailLayers()
         }
         
-        updateWatchFaceTicks()
+//        updateWatchFaceTicks()
         updateWatchFaceNumerals()
         updateWatchFaceTitle()
         CATransaction.commit()
@@ -467,31 +480,32 @@ public enum ClockInteractionType: String {
         let size = CGSize(width: 2 * buttonRadius, height: 2 * buttonRadius)
         let iSize = CGSize(width: 2 * iButtonRadius, height: 2 * iButtonRadius)
         let circle = UIBezierPath(ovalIn: CGRect(origin: CGPoint(x: 0, y:0), size: size)).cgPath
-        let iCircle = UIBezierPath(ovalIn: CGRect(origin: CGPoint(x: 0, y:0), size: iSize)).cgPath
         tailLayer.path = circle
         headLayer.path = circle
         tailLayer.size = size
         headLayer.size = size
         tailLayer.position = tailPoint
         headLayer.position = headPoint
-        topTailLayer.position = tailPoint
-        topHeadLayer.position = headPoint
-        headLayer.fillColor = UIColor.yellow.cgColor
         tailLayer.fillColor = UIColor.green.cgColor
-        topTailLayer.path = iCircle
-        topHeadLayer.path = iCircle
-        topTailLayer.size = iSize
-        topHeadLayer.size = iSize
-        topHeadLayer.fillColor = disabledFormattedColor(headBackgroundColor).cgColor
-        topTailLayer.fillColor = disabledFormattedColor(tailBackgroundColor).cgColor
-        topHeadLayer.sublayers?.forEach({$0.removeFromSuperlayer()})
-        topTailLayer.sublayers?.forEach({$0.removeFromSuperlayer()})
-        let stText = tlabel("Sleep", color: disabledFormattedColor(headTextColor))
-        let endText = tlabel("Wake",color: disabledFormattedColor(tailTextColor))
-        stText.position = topTailLayer.center
-        endText.position = topHeadLayer.center
-        topHeadLayer.addSublayer(endText)
-        topTailLayer.addSublayer(stText)
+        headLayer.fillColor = UIColor.yellow.cgColor
+        
+//        let iCircle = UIBezierPath(ovalIn: CGRect(origin: CGPoint(x: 0, y:0), size: iSize)).cgPath
+//        topTailLayer.path = iCircle
+//        topHeadLayer.path = iCircle
+//        topTailLayer.size = iSize
+//        topHeadLayer.size = iSize
+//        topTailLayer.position = tailPoint
+//        topHeadLayer.position = headPoint
+//        topHeadLayer.fillColor = disabledFormattedColor(headBackgroundColor).cgColor
+//        topTailLayer.fillColor = disabledFormattedColor(tailBackgroundColor).cgColor
+//        topHeadLayer.sublayers?.forEach({$0.removeFromSuperlayer()})
+//        topTailLayer.sublayers?.forEach({$0.removeFromSuperlayer()})
+//        let stText = tlabel("Sleep", color: disabledFormattedColor(headTextColor))
+//        let endText = tlabel("Wake",color: disabledFormattedColor(tailTextColor))
+//        stText.position = topTailLayer.center
+//        endText.position = topHeadLayer.center
+//        topHeadLayer.addSublayer(endText)
+//        topTailLayer.addSublayer(stText)
     }
     
     func updateSingleDialLayerPath() {
@@ -521,17 +535,21 @@ public enum ClockInteractionType: String {
         let origin = numeralsLayer.center
         let step = (2 * M_PI) / Double(clockHourTypeHours)
         for i in (1 ... clockHourTypeHours){
-            let l = CATextLayer()
-            l.bounds.size = CGSize(width: i > 9 ? 18 : 8, height: 15)
-            l.fontSize = self.clockNumeralsFont.pointSize
-            l.alignmentMode = kCAAlignmentCenter
-            l.contentsScale = UIScreen.main.scale
-            //            l.foregroundColor
-            l.font = cgFont
-            l.string = "\(i)"
-            l.foregroundColor = disabledFormattedColor(numeralsColor ?? tintColor).cgColor
-            l.position = CGVector(from:origin, to:startPos).rotate( CGFloat(Double(i) * step)).add(origin.vector).point.checked
-            numeralsLayer.addSublayer(l)
+            if i%6 == 0 {
+                let l = CATextLayer()
+//                l.bounds.size = CGSize(width: i > 9 ? 18 : 8, height: 15)
+                l.bounds.size = CGSize(width: 30, height: 15)
+                l.fontSize = self.clockNumeralsFont.pointSize
+                l.alignmentMode = kCAAlignmentCenter
+                l.contentsScale = UIScreen.main.scale
+                //            l.foregroundColor
+                l.font = cgFont
+                l.string = String(format: "%02d:00", i == 24 ? 0 : i)
+//                l.string = "\(i):00"
+                l.foregroundColor = disabledFormattedColor(numeralsColor ?? tintColor).cgColor
+                l.position = CGVector(from:origin, to:startPos).rotate( CGFloat(Double(i) * step)).add(origin.vector).point.checked
+                numeralsLayer.addSublayer(l)
+            }
         }
     }
     
