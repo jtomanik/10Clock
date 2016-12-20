@@ -103,6 +103,9 @@ public enum ClockInteractionType: String {
     open var gradientColors = [UIColor.orange, UIColor.yellow]
     open var gradientLocations: [CGFloat] = [0.0, 1.0]
     
+    open var trackGradientColors = [UIColor.darkGray, UIColor.lightGray]
+    open var trackGradientLocations: [CGFloat] = [0.0, 1.0]
+    
     open var minorTicksEnabled:Bool = true
     open var majorTicksEnabled:Bool = true
     @objc open var disabled:Bool = false {
@@ -237,6 +240,7 @@ public enum ClockInteractionType: String {
     //MARK:- Layers
     let gradientLayer = CAGradientLayer()
     let radialGradientLayer = RadialGradientLayer()
+    let trackRadialGradientLayer = RadialGradientLayer()
     let trackLayer = CAShapeLayer()
     let pathLayer = CAShapeLayer()
     let headLayer = CAShapeLayer()
@@ -317,6 +321,7 @@ public enum ClockInteractionType: String {
         layer.addSublayer(repLayer)
         layer.addSublayer(numeralsLayer)
         layer.addSublayer(trackLayer)
+        layer.addSublayer(trackRadialGradientLayer)
         
         switch self.gradientType {
         case .linear:
@@ -356,6 +361,7 @@ public enum ClockInteractionType: String {
 
         strokeColor = disabledFormattedColor(tintColor)
         overallPathLayer.occupation = layer.occupation
+        trackRadialGradientLayer.occupation = layer.occupation
         
         if self.gradientType == .linear {
             gradientLayer.occupation = layer.occupation
@@ -373,7 +379,8 @@ public enum ClockInteractionType: String {
         trackLayer.fillColor = UIColor.clear.cgColor
         pathLayer.fillColor = UIColor.clear.cgColor
 
-
+        updateTrackRadialGradientLayer()
+        
         CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
         if self.gradientType == .linear {
             updateGradientLayer()
@@ -409,6 +416,13 @@ public enum ClockInteractionType: String {
         radialGradientLayer.radius = radialGradientLayer.size.width/2.0
         radialGradientLayer.colors = gradientColors.map(disabledFormattedColor).map{$0.cgColor}
         radialGradientLayer.locations = gradientLocations
+    }
+    
+    func updateTrackRadialGradientLayer() {
+        trackRadialGradientLayer.mask = trackLayer
+        trackRadialGradientLayer.radius = trackRadialGradientLayer.size.width/2.0
+        trackRadialGradientLayer.colors = trackGradientColors.map(disabledFormattedColor).map{$0.cgColor}
+        trackRadialGradientLayer.locations = trackGradientLocations
     }
 
     func updateTrackLayerPath() {
