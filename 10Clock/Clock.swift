@@ -57,6 +57,12 @@ public enum ClockInteractionType: String {
         set{ headAngle = timeToAngle(newValue) }
     }
     
+    open var rangedTimes = [
+        ["start":NSDate(),"end":NSDate().addingTimeInterval(60*60*3)],
+        ["start":NSDate().addingTimeInterval(60*60*4),"end":NSDate().addingTimeInterval(60*60*7)],
+        ["start":NSDate().addingTimeInterval(60*60*8),"end":NSDate().addingTimeInterval(60*60*12)]
+    ]
+    
     open var clockInteractionType: ClockInteractionType = .exact {
         didSet {
             self.setup()
@@ -209,9 +215,9 @@ public enum ClockInteractionType: String {
     var headPoint: CGPoint{
         return proj(headAngle)
     }
-    var tailPoint: CGPoint{
-        return proj(tailAngle)
-    }
+//    var tailPoint: CGPoint{
+//        return proj(tailAngle)
+//    }
 
     lazy internal var calendar = Calendar(identifier:Calendar.Identifier.gregorian)
     
@@ -247,13 +253,16 @@ public enum ClockInteractionType: String {
     var trackRadialGradientLayer = RadialGradientLayer()
     let trackLayer = CAShapeLayer()
     let pathLayer = CAShapeLayer()
-    let headLayer = CAShapeLayer()
-    let tailLayer = CAShapeLayer()
+//    let headLayer = CAShapeLayer()
+//    let tailLayer = CAShapeLayer()
     var topHeadLayer = CAShapeLayer()
     var topTailLayer = CAShapeLayer()
     let numeralsLayer = CALayer()
     var titleTextLayer = CATextLayer()
     var overallPathLayer = CALayer()
+    
+    // Container layer for ranged time segments
+    var rangedSegmentsLayer = CALayer()
     
     let exactTitleTextLayer = CATextLayer()
     
@@ -356,9 +365,10 @@ public enum ClockInteractionType: String {
             layer.addSublayer(overallPathLayer)
             layer.addSublayer(exactTimeIndicatorLayer)
         default:
-            overallPathLayer.addSublayer(pathLayer)
-            overallPathLayer.addSublayer(headLayer)
-            overallPathLayer.addSublayer(tailLayer)
+            overallPathLayer.addSublayer(rangedSegmentsLayer)
+//            overallPathLayer.addSublayer(pathLayer)
+//            overallPathLayer.addSublayer(headLayer)
+//            overallPathLayer.addSublayer(tailLayer)
             layer.addSublayer(titleTextLayer)
             layer.addSublayer(overallPathLayer)
         }
@@ -374,6 +384,7 @@ public enum ClockInteractionType: String {
 
         strokeColor = disabledFormattedColor(tintColor)
         overallPathLayer.occupation = layer.occupation
+        rangedSegmentsLayer.occupation = layer.occupation
         trackRadialGradientLayer.occupation = layer.occupation
         
         if self.gradientType == .linear {
@@ -385,13 +396,16 @@ public enum ClockInteractionType: String {
         trackLayer.occupation = (inset.size, layer.center)
 
         pathLayer.occupation = (inset.size, overallPathLayer.center)
+        
         repLayer.occupation = (internalInset.size, overallPathLayer.center)
         repLayer2.occupation  =  (internalInset.size, overallPathLayer.center)
         numeralsLayer.occupation = (numeralInset.size, layer.center)
 
         trackLayer.fillColor = UIColor.clear.cgColor
         pathLayer.fillColor = UIColor.clear.cgColor
-
+        
+        updateWatchFaceRangedSegments()
+        
         updateTrackRadialGradientLayer()
         
         CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
@@ -406,16 +420,164 @@ public enum ClockInteractionType: String {
         case .exact:
             updateSingleDialLayerPath()
         default:
-            updatePathLayerPath()
-            updateHeadTailLayers()
+            break
+//            updatePathLayerPath()
+//            updateHeadTailLayers()
         }
         
 //        updateWatchFaceTicks()
         updateWatchFaceNumerals()
         updateWatchFaceTitle()
+        
         CATransaction.commit()
 
     }
+    
+    func updateWatchFaceRangedSegments() {
+//        let wedgeLayer = CAShapeLayer()
+//        wedgeLayer.occupation = (inset.size, overallPathLayer.center)
+//        let arcCenter = wedgeLayer.center
+//        wedgeLayer.strokeColor = strokeColor.cgColor
+//        wedgeLayer.fillColor = UIColor.clear.cgColor
+//        wedgeLayer.lineWidth = pathWidth
+//        wedgeLayer.path = UIBezierPath(
+//            arcCenter: arcCenter,
+//            radius: trackRadius,
+//            startAngle: ( twoPi  ) -  ((tailAngle - headAngle) >= twoPi ? tailAngle - twoPi : tailAngle),
+//            endAngle: ( twoPi ) -  headAngle,
+//            clockwise: true).cgPath
+        
+//        let headLayer = CAShapeLayer()
+//        let tailLayer = CAShapeLayer()
+//        rangedSegmentsLayer.addSublayer(wedgeLayer)
+//        rangedSegmentsLayer.addSublayer(headLayer)
+//        rangedSegmentsLayer.addSublayer(tailLayer)
+        rangedSegmentsLayer.sublayers?.forEach({$0.removeFromSuperlayer()})
+//
+        for rangedTime in rangedTimes {
+            guard let startTime = rangedTime["start"] else {
+                print("Expected to find a start time of type NSDate")
+                continue
+            }
+            
+            guard let endTime = rangedTime["end"] else {
+                print("Expected to find a start time of type NSDate")
+                continue
+            }
+            
+            let tailAngle = timeToAngle(startTime as Date)
+            let headAngle = timeToAngle(endTime as Date)
+            
+//            let wedgeLayer = rangedSegmentLayer(headAngle: headAngle, tailAngle: tailAngle)
+            let wedgeLayer = TimeWedgeLayer(headAngle: headAngle,
+                                            tailAngle: tailAngle,
+                                            size: overallPathLayer.size,
+                                            wedgeCenter: overallPathLayer.center,
+                                            insetSize: inset.size,
+                                            pathWidth: pathWidth,
+                                            trackRadius: trackRadius,
+                                            buttonRadius: buttonRadius)
+            
+            
+            
+//            let size = CGSize(width: 2 * buttonRadius, height: 2 * buttonRadius)
+//            //        let iSize = CGSize(width: 2 * iButtonRadius, height: 2 * iButtonRadius)
+//            let circle = UIBezierPath(ovalIn: CGRect(origin: CGPoint(x: 0, y:0), size: size)).cgPath
+//            let tailLayer = CAShapeLayer()
+//            let headLayer = CAShapeLayer()
+//            tailLayer.path = circle
+//            headLayer.path = circle
+//            tailLayer.size = size
+//            headLayer.size = size
+//            tailLayer.position = proj(startAngle)
+//            headLayer.position = proj(endAngle)
+//            tailLayer.fillColor = UIColor.green.cgColor
+//            headLayer.fillColor = UIColor.yellow.cgColor
+            
+//            rangedSegmentsLayer.addSublayer(wedgeLayer)
+//            rangedSegmentsLayer.addSublayer(tailLayer)
+//            rangedSegmentsLayer.addSublayer(headLayer)
+            
+            
+            rangedSegmentsLayer.addSublayer(wedgeLayer)
+            
+        }
+    }
+    
+    func rangedSegmentLayer(headAngle: CGFloat, tailAngle: CGFloat) -> CAShapeLayer {
+        let segmentLayer = CAShapeLayer()
+        segmentLayer.occupation = (inset.size, overallPathLayer.center)
+        let arcCenter = segmentLayer.center
+        segmentLayer.strokeColor = strokeColor.cgColor
+        segmentLayer.fillColor = UIColor.clear.cgColor
+        segmentLayer.lineWidth = pathWidth
+        segmentLayer.path = UIBezierPath(
+            arcCenter: arcCenter,
+            radius: trackRadius,
+            startAngle: ( twoPi  ) -  ((tailAngle - headAngle) >= twoPi ? tailAngle - twoPi : tailAngle),
+            endAngle: ( twoPi ) -  headAngle,
+            clockwise: true).cgPath
+        return segmentLayer
+    }
+    
+//    func updatePathLayerPath() {
+//        let arcCenter = pathLayer.center
+//        pathLayer.fillColor = UIColor.clear.cgColor
+//        pathLayer.lineWidth = pathWidth
+//        pathLayer.path = UIBezierPath(
+//            arcCenter: arcCenter,
+//            radius: trackRadius,
+//            startAngle: ( twoPi  ) -  ((tailAngle - headAngle) >= twoPi ? tailAngle - twoPi : tailAngle),
+//            endAngle: ( twoPi ) -  headAngle,
+//            clockwise: true).cgPath
+//    }
+    
+    
+    func tlabel(_ str:String, color:UIColor? = nil) -> CATextLayer {
+        let cgFont = CTFontCreateWithName(self.clockNumeralsFont.fontName as CFString?, self.clockNumeralsFont.pointSize/2,nil)
+        let l = CATextLayer()
+        l.bounds.size = CGSize(width: 30, height: 15)
+        l.fontSize = self.clockNumeralsFont.pointSize
+        l.foregroundColor =  disabledFormattedColor(color ?? tintColor).cgColor
+        l.alignmentMode = kCAAlignmentCenter
+        l.contentsScale = UIScreen.main.scale
+        l.font = cgFont
+        l.string = str
+        
+        return l
+    }
+    
+//    func updateHeadTailLayers() {
+//        let size = CGSize(width: 2 * buttonRadius, height: 2 * buttonRadius)
+//        //        let iSize = CGSize(width: 2 * iButtonRadius, height: 2 * iButtonRadius)
+//        let circle = UIBezierPath(ovalIn: CGRect(origin: CGPoint(x: 0, y:0), size: size)).cgPath
+//        tailLayer.path = circle
+//        headLayer.path = circle
+//        tailLayer.size = size
+//        headLayer.size = size
+//        tailLayer.position = tailPoint
+//        headLayer.position = headPoint
+//        tailLayer.fillColor = UIColor.green.cgColor
+//        headLayer.fillColor = UIColor.yellow.cgColor
+//        
+//        //        let iCircle = UIBezierPath(ovalIn: CGRect(origin: CGPoint(x: 0, y:0), size: iSize)).cgPath
+//        //        topTailLayer.path = iCircle
+//        //        topHeadLayer.path = iCircle
+//        //        topTailLayer.size = iSize
+//        //        topHeadLayer.size = iSize
+//        //        topTailLayer.position = tailPoint
+//        //        topHeadLayer.position = headPoint
+//        //        topHeadLayer.fillColor = disabledFormattedColor(headBackgroundColor).cgColor
+//        //        topTailLayer.fillColor = disabledFormattedColor(tailBackgroundColor).cgColor
+//        //        topHeadLayer.sublayers?.forEach({$0.removeFromSuperlayer()})
+//        //        topTailLayer.sublayers?.forEach({$0.removeFromSuperlayer()})
+//        //        let stText = tlabel("Sleep", color: disabledFormattedColor(headTextColor))
+//        //        let endText = tlabel("Wake",color: disabledFormattedColor(tailTextColor))
+//        //        stText.position = topTailLayer.center
+//        //        endText.position = topHeadLayer.center
+//        //        topHeadLayer.addSublayer(endText)
+//        //        topTailLayer.addSublayer(stText)
+//    }
     
     func updateGradientLayer() {
         gradientLayer.colors = gradientColors.map(disabledFormattedColor).map{$0.cgColor}
@@ -447,65 +609,6 @@ public enum ClockInteractionType: String {
         trackLayer.lineWidth = pathWidth
         trackLayer.path = circle.cgPath
 
-    }
-    
-    func updatePathLayerPath() {
-        let arcCenter = pathLayer.center
-        pathLayer.fillColor = UIColor.clear.cgColor
-        pathLayer.lineWidth = pathWidth
-        pathLayer.path = UIBezierPath(
-            arcCenter: arcCenter,
-            radius: trackRadius,
-            startAngle: ( twoPi  ) -  ((tailAngle - headAngle) >= twoPi ? tailAngle - twoPi : tailAngle),
-            endAngle: ( twoPi ) -  headAngle,
-            clockwise: true).cgPath
-    }
-
-
-    func tlabel(_ str:String, color:UIColor? = nil) -> CATextLayer {
-        let cgFont = CTFontCreateWithName(self.clockNumeralsFont.fontName as CFString?, self.clockNumeralsFont.pointSize/2,nil)
-        let l = CATextLayer()
-        l.bounds.size = CGSize(width: 30, height: 15)
-        l.fontSize = self.clockNumeralsFont.pointSize
-        l.foregroundColor =  disabledFormattedColor(color ?? tintColor).cgColor
-        l.alignmentMode = kCAAlignmentCenter
-        l.contentsScale = UIScreen.main.scale
-        l.font = cgFont
-        l.string = str
-
-        return l
-    }
-    
-    func updateHeadTailLayers() {
-        let size = CGSize(width: 2 * buttonRadius, height: 2 * buttonRadius)
-//        let iSize = CGSize(width: 2 * iButtonRadius, height: 2 * iButtonRadius)
-        let circle = UIBezierPath(ovalIn: CGRect(origin: CGPoint(x: 0, y:0), size: size)).cgPath
-        tailLayer.path = circle
-        headLayer.path = circle
-        tailLayer.size = size
-        headLayer.size = size
-        tailLayer.position = tailPoint
-        headLayer.position = headPoint
-        tailLayer.fillColor = UIColor.green.cgColor
-        headLayer.fillColor = UIColor.yellow.cgColor
-        
-//        let iCircle = UIBezierPath(ovalIn: CGRect(origin: CGPoint(x: 0, y:0), size: iSize)).cgPath
-//        topTailLayer.path = iCircle
-//        topHeadLayer.path = iCircle
-//        topTailLayer.size = iSize
-//        topHeadLayer.size = iSize
-//        topTailLayer.position = tailPoint
-//        topHeadLayer.position = headPoint
-//        topHeadLayer.fillColor = disabledFormattedColor(headBackgroundColor).cgColor
-//        topTailLayer.fillColor = disabledFormattedColor(tailBackgroundColor).cgColor
-//        topHeadLayer.sublayers?.forEach({$0.removeFromSuperlayer()})
-//        topTailLayer.sublayers?.forEach({$0.removeFromSuperlayer()})
-//        let stText = tlabel("Sleep", color: disabledFormattedColor(headTextColor))
-//        let endText = tlabel("Wake",color: disabledFormattedColor(tailTextColor))
-//        stText.position = topTailLayer.center
-//        endText.position = topHeadLayer.center
-//        topHeadLayer.addSublayer(endText)
-//        topTailLayer.addSublayer(stText)
     }
     
     func updateSingleDialLayerPath() {
@@ -640,18 +743,18 @@ public enum ClockInteractionType: String {
             } else {
                 pointMover = nil
             }
-        case headLayer:
-            if (shouldMoveHead) {
-                pointMover = pointerMoverProducer({ _ in self.headAngle}, {self.headAngle += $0; self.tailAngle += 0})
-            } else {
-                pointMover = nil
-            }
-        case tailLayer:
-            if (shouldMoveHead) {
-                pointMover = pointerMoverProducer({_ in self.tailAngle}, {self.headAngle += 0;self.tailAngle += $0})
-            } else {
-                    pointMover = nil
-            }
+//        case headLayer:
+//            if (shouldMoveHead) {
+//                pointMover = pointerMoverProducer({ _ in self.headAngle}, {self.headAngle += $0; self.tailAngle += 0})
+//            } else {
+//                pointMover = nil
+//            }
+//        case tailLayer:
+//            if (shouldMoveHead) {
+//                pointMover = pointerMoverProducer({_ in self.tailAngle}, {self.headAngle += 0;self.tailAngle += $0})
+//            } else {
+//                    pointMover = nil
+//            }
         case pathLayer:
             if (shouldMoveHead) {
             		pointMover = pointerMoverProducer({ pt in

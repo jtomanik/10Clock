@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		123A00098C8A1EB16C8B2BAC /* CoreAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 123A0EBFF5B6F30085CBA25B /* CoreAnimation.swift */; };
+		D16EEC6A1E23E8280074D7E4 /* TimeWedgeLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D16EEC691E23E8280074D7E4 /* TimeWedgeLayer.swift */; };
+		D16EEC6B1E23ED310074D7E4 /* TimeWedgeLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D16EEC691E23E8280074D7E4 /* TimeWedgeLayer.swift */; };
 		D1F69DFC1DE32B78006D3D70 /* Date+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F69DFB1DE32B78006D3D70 /* Date+Extensions.swift */; };
 		D1F69DFF1DE346BD006D3D70 /* RadialGradientLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1F69DFD1DE34493006D3D70 /* RadialGradientLayer.swift */; };
 		D8B040301D7F2BB200B11B6A /* TenClock.h in Headers */ = {isa = PBXBuildFile; fileRef = D8B0402F1D7F2BB200B11B6A /* TenClock.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -60,6 +62,7 @@
 		123A0A5F3EBBDD4415A60AEF /* DateExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DateExtensions.swift; sourceTree = "<group>"; };
 		123A0C52CF7F9A43C23EF319 /* Clock.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Clock.swift; sourceTree = "<group>"; };
 		123A0EBFF5B6F30085CBA25B /* CoreAnimation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoreAnimation.swift; sourceTree = "<group>"; };
+		D16EEC691E23E8280074D7E4 /* TimeWedgeLayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimeWedgeLayer.swift; sourceTree = "<group>"; };
 		D1F69DFB1DE32B78006D3D70 /* Date+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Date+Extensions.swift"; sourceTree = "<group>"; };
 		D1F69DFD1DE34493006D3D70 /* RadialGradientLayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RadialGradientLayer.swift; sourceTree = "<group>"; };
 		D82D37F71D850C44004BB61C /* module.modulemap */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
@@ -114,6 +117,7 @@
 				123A0A5F3EBBDD4415A60AEF /* DateExtensions.swift */,
 				123A0EBFF5B6F30085CBA25B /* CoreAnimation.swift */,
 				D1F69DFD1DE34493006D3D70 /* RadialGradientLayer.swift */,
+				D16EEC691E23E8280074D7E4 /* TimeWedgeLayer.swift */,
 			);
 			path = 10Clock;
 			sourceTree = "<group>";
@@ -319,6 +323,7 @@
 				D8B0403C1D7F69D700B11B6A /* DateExtensions.swift in Sources */,
 				123A00098C8A1EB16C8B2BAC /* CoreAnimation.swift in Sources */,
 				D1F69DFF1DE346BD006D3D70 /* RadialGradientLayer.swift in Sources */,
+				D16EEC6B1E23ED310074D7E4 /* TimeWedgeLayer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -337,6 +342,7 @@
 				D8F6E8231D7745B800E29842 /* ViewController.swift in Sources */,
 				D8F6E8211D7745B800E29842 /* AppDelegate.swift in Sources */,
 				D1F69DFC1DE32B78006D3D70 /* Date+Extensions.swift in Sources */,
+				D16EEC6A1E23E8280074D7E4 /* TimeWedgeLayer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
