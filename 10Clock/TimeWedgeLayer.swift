@@ -24,6 +24,7 @@ class TimeWedgeLayer: CAShapeLayer {
     var buttonRadius: CGFloat = 44
     var pathWidth: CGFloat = 44
     var wedgeCenter: CGPoint = CGPoint.zero
+    var wedgeTapTarget = UIBezierPath()
     
     let wedgeLayer = CAShapeLayer()
     let tailLayer = TailKnobLayer()
@@ -100,57 +101,30 @@ class TimeWedgeLayer: CAShapeLayer {
             clockwise: true).cgPath
         tailLayer.position = proj(tailAngle)
         headLayer.position = proj(headAngle)
+        
+        guard let wedgePath = wedgeLayer.path else {
+            return
+        }
+        // Update the tap area for the wedge
+        let wedgeBezierPath = UIBezierPath(cgPath: wedgeLayer.path!)
+        
+        let tapBezierPath = wedgePath.copy(strokingWithWidth: self.pathWidth, lineCap: wedgeBezierPath.lineCapStyle, lineJoin: wedgeBezierPath.lineJoinStyle, miterLimit: wedgeBezierPath.miterLimit)
+        wedgeTapTarget = UIBezierPath(cgPath: tapBezierPath)
+        
     }
-
-//    override func contains(_ p: CGPoint) -> Bool {
-//        if let path = wedgeLayer.path {
-//            if path.contains(p) {
-//                return true
-//            }
-//        }
-//        if let path = tailLayer.path {
-//            if path.contains(p) {
-//                return true
-//            }
-//        }
-//        if let path = headLayer.path {
-//            if path.contains(p) {
-//                return true
-//            }
-//        }
-//        return false
-//    }
     
     override func hitTest(_ p: CGPoint) -> CALayer? {
+        let headPoint = self.headLayer.convert(p, from: self.superlayer)
+        let tailPoint = self.tailLayer.convert(p, from: self.superlayer)
+        let wedgePoint = self.wedgeLayer.convert(p, from: self.superlayer)
         
-//        let transformTail = CGAffineTransform(translationX: -tailLayer.position.x, y: -tailLayer.position.y);
-        
-//        if let path = tailLayer.path {
-//            if(path.contains(p)) {
-//                // the touch is inside the shape
-//                print("Tail hit")
-//                return tailLayer
-//            }
-//        }
-        
-//        let transformWedge = CGAffineTransform(translationX: -wedgeLayer.position.x, y: -wedgeLayer.position.y);
-        
-//        if let path = wedgeLayer.path {
-//            if(path.contains(p)) {
-//                // the touch is inside the shape
-//                print("Wedge hit")
-//                return wedgeLayer
-//            }
-//        }
-//        return nil
-        
-        if headLayer.hitTest(p) != nil {
+        if headLayer.path!.contains(headPoint, using: CGPathFillRule.evenOdd, transform: CGAffineTransform.identity) {
             return headLayer
         }
-        else if (tailLayer.hitTest(p) != nil) {
+        else if (tailLayer.path!.contains(tailPoint, using: CGPathFillRule.evenOdd, transform: CGAffineTransform.identity)) {
             return tailLayer
         }
-        else if (wedgeLayer.hitTest(p) != nil) {
+        else if (wedgeTapTarget.contains(wedgePoint)) {
             return wedgeLayer
         }
         return nil

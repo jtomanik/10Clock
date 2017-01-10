@@ -715,7 +715,12 @@ public enum ClockInteractionType: String {
             switch identifier {
             case TimeWedgeLayer.wedgeIdentifierName:
                 // Get the angles for this wedge and change them
-                
+                pointMover = pointerMoverProducer({ pt in
+                    let x = CGVector(from: self.bounds.center,
+                                     to:CGPoint(x: prev.x, y: self.layer.bounds.height - prev.y)).theta;
+                prev = pt;
+                return x
+                }, {self.rangedAngles[wedgeIndex].headAngle += $0; self.rangedAngles[wedgeIndex].tailAngle += $0 })
                 break
             case TimeWedgeLayer.tailIdentifierName:
                 // Find the angle
