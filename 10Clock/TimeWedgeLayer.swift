@@ -9,6 +9,9 @@
 import Foundation
 import UIKit
 
+typealias HeadKnobLayer = CAShapeLayer
+typealias TailKnobLayer = CAShapeLayer
+
 class TimeWedgeLayer: CAShapeLayer {
     
     typealias Angle = CGFloat
@@ -23,8 +26,12 @@ class TimeWedgeLayer: CAShapeLayer {
     var wedgeCenter: CGPoint = CGPoint.zero
     
     let wedgeLayer = CAShapeLayer()
-    let tailLayer = CAShapeLayer()
-    let headLayer = CAShapeLayer()
+    let tailLayer = TailKnobLayer()
+    let headLayer = HeadKnobLayer()
+    
+    static let tailIdentifierName = "TailKnobIdentifier"
+    static let headIdentifierName = "HeadKnobIdentifier"
+    static let wedgeIdentifierName = "TimeWedgeIdentifier"
     
     init(headAngle: CGFloat, tailAngle: CGFloat, size: CGSize, wedgeCenter: CGPoint, insetSize: CGSize, pathWidth: CGFloat, trackRadius: CGFloat, buttonRadius: CGFloat) {
         super.init()
@@ -37,6 +44,9 @@ class TimeWedgeLayer: CAShapeLayer {
         self.wedgeCenter = center
         self.trackRadius = trackRadius
         self.buttonRadius = buttonRadius
+        tailLayer.name = TimeWedgeLayer.tailIdentifierName
+        headLayer.name = TimeWedgeLayer.headIdentifierName
+        wedgeLayer.name = TimeWedgeLayer.wedgeIdentifierName
         setupLayer()
     }
     
@@ -73,10 +83,10 @@ class TimeWedgeLayer: CAShapeLayer {
         headLayer.fillColor = UIColor.yellow.cgColor
         self.addSublayer(headLayer)
         self.addSublayer(tailLayer)
+        
     }
     
     override func layoutSublayers() {
-        super.layoutSublayers()
         wedgeLayer.occupation = (insetSize, wedgeCenter)
         wedgeLayer.lineWidth = pathWidth
         wedgeLayer.strokeColor = UIColor.red.cgColor
@@ -90,6 +100,60 @@ class TimeWedgeLayer: CAShapeLayer {
             clockwise: true).cgPath
         tailLayer.position = proj(tailAngle)
         headLayer.position = proj(headAngle)
+    }
+
+//    override func contains(_ p: CGPoint) -> Bool {
+//        if let path = wedgeLayer.path {
+//            if path.contains(p) {
+//                return true
+//            }
+//        }
+//        if let path = tailLayer.path {
+//            if path.contains(p) {
+//                return true
+//            }
+//        }
+//        if let path = headLayer.path {
+//            if path.contains(p) {
+//                return true
+//            }
+//        }
+//        return false
+//    }
+    
+    override func hitTest(_ p: CGPoint) -> CALayer? {
+        
+//        let transformTail = CGAffineTransform(translationX: -tailLayer.position.x, y: -tailLayer.position.y);
+        
+//        if let path = tailLayer.path {
+//            if(path.contains(p)) {
+//                // the touch is inside the shape
+//                print("Tail hit")
+//                return tailLayer
+//            }
+//        }
+        
+//        let transformWedge = CGAffineTransform(translationX: -wedgeLayer.position.x, y: -wedgeLayer.position.y);
+        
+//        if let path = wedgeLayer.path {
+//            if(path.contains(p)) {
+//                // the touch is inside the shape
+//                print("Wedge hit")
+//                return wedgeLayer
+//            }
+//        }
+//        return nil
+        
+        if headLayer.hitTest(p) != nil {
+            return headLayer
+        }
+        else if (tailLayer.hitTest(p) != nil) {
+            return tailLayer
+        }
+        else if (wedgeLayer.hitTest(p) != nil) {
+            return wedgeLayer
+        }
+        return nil
     }
     
     //MARK:- Helper functions

@@ -9,6 +9,9 @@
 import Foundation
 import UIKit
 
+typealias Wedge = (tailAngle: CGFloat, headAngle: CGFloat)
+public typealias RangedTime = (startTime: Date, endTime: Date)
+
 @objc public  protocol TenClockDelegate {
     //Executed for every touch.
     @objc optional func timesUpdated(_ clock:TenClock, startDate:Date,  endDate:Date  ) -> ()
@@ -57,11 +60,23 @@ public enum ClockInteractionType: String {
         set{ headAngle = timeToAngle(newValue) }
     }
     
-    open var rangedTimes = [
-        ["start":NSDate(),"end":NSDate().addingTimeInterval(60*60*3)],
-        ["start":NSDate().addingTimeInterval(60*60*4),"end":NSDate().addingTimeInterval(60*60*7)],
-        ["start":NSDate().addingTimeInterval(60*60*8),"end":NSDate().addingTimeInterval(60*60*12)]
-    ]
+    open var rangedTimes: Array<RangedTime> = [] {
+        didSet {
+            // Update the ranged angles
+            rangedAngles.removeAll()
+            
+            for rangedTime in rangedTimes {
+                let tailAngle = timeToAngle(rangedTime.startTime)
+                let headAngle = timeToAngle(rangedTime.endTime)
+                let wedgeAngle = Wedge(tailAngle: tailAngle, headAngle: headAngle)
+                rangedAngles.append(wedgeAngle)
+            }
+            self.resetTimeWedges()
+            self.update()
+        }
+    }
+    
+    internal var rangedAngles: Array<Wedge> = []
     
     open var clockInteractionType: ClockInteractionType = .exact {
         didSet {
@@ -320,6 +335,9 @@ public enum ClockInteractionType: String {
     
     func setup() {
         
+        
+//        Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(timerDidFire(timer:)), userInfo: nil, repeats: true)
+        
         // Clear all existing layers
         timeWedges = []
         
@@ -344,6 +362,13 @@ public enum ClockInteractionType: String {
         // Update all the layers
         update()
     }
+    
+//    func timerDidFire(timer: Timer) {
+//        if let endTime = (rangedTimes[1])["end"] {
+//            (rangedTimes[1])["end"] = endTime.addingTimeInterval(60*60)
+//            self.setNeedsLayout()
+//        }
+//    }
     
     func createSublayers() {
 //        layer.addSublayer(repLayer2)
@@ -371,7 +396,7 @@ public enum ClockInteractionType: String {
             layer.addSublayer(exactTimeIndicatorLayer)
         default:
             overallPathLayer.addSublayer(rangedSegmentsLayer)
-            addTimeWedges()
+            resetTimeWedges()
             layer.addSublayer(titleTextLayer)
             layer.addSublayer(overallPathLayer)
         }
@@ -379,23 +404,18 @@ public enum ClockInteractionType: String {
         strokeColor = disabledFormattedColor(tintColor)
     }
     
+    func resetTimeWedges() {
+        self.rangedSegmentsLayer.sublayers?.forEach({$0.removeFromSuperlayer()})
+        addTimeWedges()
+    }
+    
     func addTimeWedges() {
-        for rangedTime in rangedTimes {
-            guard let startTime = rangedTime["start"] else {
-                print("Expected to find a start time of type NSDate")
-                continue
-            }
+        for rangedAngle in rangedAngles {
+//            let tailAngle = timeToAngle(startTime as Date)
+//            let headAngle = timeToAngle(endTime as Date)
             
-            guard let endTime = rangedTime["end"] else {
-                print("Expected to find a start time of type NSDate")
-                continue
-            }
-            
-            let tailAngle = timeToAngle(startTime as Date)
-            let headAngle = timeToAngle(endTime as Date)
-            
-            let wedgeLayer = TimeWedgeLayer(headAngle: headAngle,
-                                            tailAngle: tailAngle,
+            let wedgeLayer = TimeWedgeLayer(headAngle: rangedAngle.tailAngle,
+                                            tailAngle: rangedAngle.headAngle,
                                             size: overallPathLayer.size,
                                             wedgeCenter: overallPathLayer.center,
                                             insetSize: inset.size,
@@ -473,18 +493,21 @@ public enum ClockInteractionType: String {
         
         for (index, timeWedge) in timeWedges.enumerated() {
             
-            guard let startTime = (rangedTimes[index])["start"] else {
-                print("Expected to find a start time of type NSDate")
-                continue
-            }
+//            guard let startTime = (rangedTimes[index])["start"] else {
+//                print("Expected to find a start time of type NSDate")
+//                continue
+//            }
+//            
+//            guard let endTime = (rangedTimes[index])["end"] else {
+//                print("Expected to find a start time of type NSDate")
+//                continue
+//            }
             
-            guard let endTime = (rangedTimes[index])["end"] else {
-                print("Expected to find a start time of type NSDate")
-                continue
-            }
+//            let tailAngle = timeToAngle(startTime as Date)
+//            let headAngle = timeToAngle(endTime as Date)
             
-            let tailAngle = timeToAngle(startTime as Date)
-            let headAngle = timeToAngle(endTime as Date)
+            let tailAngle = rangedAngles[index].tailAngle
+            let headAngle = rangedAngles[index].headAngle
             
             timeWedge.occupation = overallPathLayer.occupation
             timeWedge.headAngle = headAngle
@@ -655,6 +678,8 @@ public enum ClockInteractionType: String {
         let pointOfTouch = touch.location(in: self)
         guard let layer = self.overallPathLayer.hitTest( pointOfTouch ) else { return }
         
+        print(layer)
+        
         var prev = pointOfTouch
         let pointerMoverProducer: (@escaping (CGPoint) -> Angle, @escaping (Angle)->()) -> (CGPoint) -> () = { g, s in
             return { p in
@@ -668,14 +693,47 @@ public enum ClockInteractionType: String {
             }
 
         }
-
-        switch(layer){
-        case exactTimeIndicatorTouchLayer:
+        
+        if layer == exactTimeIndicatorTouchLayer {
             if (shouldMoveHead) {
                 pointMover = pointerMoverProducer({ _ in self.headAngle}, {self.headAngle += $0; self.tailAngle += 0})
             } else {
                 pointMover = nil
             }
+        }
+        // Check if this layer has a time wedge tag
+        else if let identifier = layer.name {
+            switch identifier {
+            case TimeWedgeLayer.wedgeIdentifierName:
+                // Get the angles for this wedge and change them
+                
+                break
+            case TimeWedgeLayer.tailIdentifierName:
+                // Find the angle
+                
+                break
+            case TimeWedgeLayer.headIdentifierName:
+                break
+            default:
+                break
+            }
+        }
+        
+//        if layer.isKind(of: TimeWedgeLayer.self) {
+//            let timeWedge = layer as! TimeWedgeLayer
+//            let headLayer = timeWedge.headLayer
+//            let tailLayer = timeWedge.tailLayer
+//            
+//        }
+
+//        switch(layer){
+//        case exactTimeIndicatorTouchLayer:
+//            if (shouldMoveHead) {
+//                pointMover = pointerMoverProducer({ _ in self.headAngle}, {self.headAngle += $0; self.tailAngle += 0})
+//            } else {
+//                pointMover = nil
+//            }
+        
 //        case headLayer:
 //            if (shouldMoveHead) {
 //                pointMover = pointerMoverProducer({ _ in self.headAngle}, {self.headAngle += $0; self.tailAngle += 0})
@@ -688,19 +746,19 @@ public enum ClockInteractionType: String {
 //            } else {
 //                    pointMover = nil
 //            }
-        case pathLayer:
-            if (shouldMoveHead) {
-            		pointMover = pointerMoverProducer({ pt in
-                		let x = CGVector(from: self.bounds.center,
-                		                 to:CGPoint(x: prev.x, y: self.layer.bounds.height - prev.y)).theta;
-                    prev = pt;
-                    return x
-                    }, {self.headAngle += $0; self.tailAngle += $0 })
-            } else {
-                    pointMover = nil
-            }
-        default: break
-        }
+//        case pathLayer:
+//            if (shouldMoveHead) {
+//            		pointMover = pointerMoverProducer({ pt in
+//                		let x = CGVector(from: self.bounds.center,
+//                		                 to:CGPoint(x: prev.x, y: self.layer.bounds.height - prev.y)).theta;
+//                    prev = pt;
+//                    return x
+//                    }, {self.headAngle += $0; self.tailAngle += $0 })
+//            } else {
+//                    pointMover = nil
+//            }
+//        default: break
+//        }
 
         super.touchesBegan(touches, with: event)
 

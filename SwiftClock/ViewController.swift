@@ -101,6 +101,11 @@ class ViewController: UITableViewController, TenClockDelegate {
         clock.endDate = Date(timeInterval: 3*60*60, since: clock.startDate)
         clock.gradientColors = [UIColor.red, UIColor.blue]
         clock.gradientLocations = [0.5, 1.0]
+        clock.rangedTimes = [
+            (startTime: Date(),                             endTime: Date().addingTimeInterval(60*60*3)),
+            (startTime: Date().addingTimeInterval(60*60*4), endTime: Date().addingTimeInterval(60*60*7)),
+            (startTime: Date().addingTimeInterval(60*60*8), endTime: Date().addingTimeInterval(60*60*12))
+        ]
         clock.delegate = self
     }
     override func viewWillAppear(_ animated: Bool) {
