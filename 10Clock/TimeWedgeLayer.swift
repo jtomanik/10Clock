@@ -57,17 +57,6 @@ class TimeWedgeLayer: CAShapeLayer {
     
     func setupLayer() {
         
-        wedgeLayer.occupation = (insetSize, wedgeCenter)
-        let arcCenter = wedgeLayer.center
-        wedgeLayer.strokeColor = UIColor.red.cgColor
-        wedgeLayer.fillColor = UIColor.clear.cgColor
-        wedgeLayer.lineWidth = pathWidth
-        wedgeLayer.path = UIBezierPath(
-            arcCenter: arcCenter,
-            radius: trackRadius,
-            startAngle: ( twoPI  ) -  ((tailAngle - headAngle) >= twoPI ? tailAngle - twoPI : tailAngle),
-            endAngle: ( twoPI ) -  headAngle,
-            clockwise: true).cgPath
         
         self.addSublayer(wedgeLayer)
         
@@ -79,12 +68,28 @@ class TimeWedgeLayer: CAShapeLayer {
         headLayer.path = circle
         tailLayer.size = size
         headLayer.size = size
-        tailLayer.position = proj(tailAngle)
-        headLayer.position = proj(headAngle)
+        
         tailLayer.fillColor = UIColor.green.cgColor
         headLayer.fillColor = UIColor.yellow.cgColor
         self.addSublayer(headLayer)
         self.addSublayer(tailLayer)
+    }
+    
+    override func layoutSublayers() {
+        super.layoutSublayers()
+        wedgeLayer.occupation = (insetSize, wedgeCenter)
+        wedgeLayer.lineWidth = pathWidth
+        wedgeLayer.strokeColor = UIColor.red.cgColor
+        wedgeLayer.fillColor = UIColor.clear.cgColor
+        let arcCenter = wedgeLayer.center
+        wedgeLayer.path = UIBezierPath(
+            arcCenter: arcCenter,
+            radius: trackRadius,
+            startAngle: ( twoPI  ) -  ((tailAngle - headAngle) >= twoPI ? tailAngle - twoPI : tailAngle),
+            endAngle: ( twoPI ) -  headAngle,
+            clockwise: true).cgPath
+        tailLayer.position = proj(tailAngle)
+        headLayer.position = proj(headAngle)
     }
     
     //MARK:- Helper functions

@@ -293,6 +293,8 @@ public enum ClockInteractionType: String {
         
         return r
     }()
+    
+    var timeWedges: Array<TimeWedgeLayer> = []
 
     //MARK:- Initialisation and setup
     override public init(frame: CGRect) {
@@ -319,10 +321,13 @@ public enum ClockInteractionType: String {
     func setup() {
         
         // Clear all existing layers
+        timeWedges = []
+        
         self.gradientLayer.sublayers?.forEach { $0.removeFromSuperlayer() }
         self.gradientLayer = CAGradientLayer()
         self.radialGradientLayer.sublayers?.forEach { $0.removeFromSuperlayer() }
         self.radialGradientLayer = RadialGradientLayer()
+        self.rangedSegmentsLayer.sublayers?.forEach({$0.removeFromSuperlayer()})
         self.overallPathLayer.sublayers?.forEach { $0.removeFromSuperlayer() }
         self.overallPathLayer = CALayer()
         self.layer.sublayers?.forEach { $0.removeFromSuperlayer() }
@@ -366,14 +371,45 @@ public enum ClockInteractionType: String {
             layer.addSublayer(exactTimeIndicatorLayer)
         default:
             overallPathLayer.addSublayer(rangedSegmentsLayer)
-//            overallPathLayer.addSublayer(pathLayer)
-//            overallPathLayer.addSublayer(headLayer)
-//            overallPathLayer.addSublayer(tailLayer)
+            addTimeWedges()
             layer.addSublayer(titleTextLayer)
             layer.addSublayer(overallPathLayer)
         }
         
         strokeColor = disabledFormattedColor(tintColor)
+    }
+    
+    func addTimeWedges() {
+        for rangedTime in rangedTimes {
+            guard let startTime = rangedTime["start"] else {
+                print("Expected to find a start time of type NSDate")
+                continue
+            }
+            
+            guard let endTime = rangedTime["end"] else {
+                print("Expected to find a start time of type NSDate")
+                continue
+            }
+            
+            let tailAngle = timeToAngle(startTime as Date)
+            let headAngle = timeToAngle(endTime as Date)
+            
+            let wedgeLayer = TimeWedgeLayer(headAngle: headAngle,
+                                            tailAngle: tailAngle,
+                                            size: overallPathLayer.size,
+                                            wedgeCenter: overallPathLayer.center,
+                                            insetSize: inset.size,
+                                            pathWidth: pathWidth,
+                                            trackRadius: trackRadius,
+                                            buttonRadius: buttonRadius)
+            
+            
+            rangedSegmentsLayer.addSublayer(wedgeLayer)
+            
+            // Add the layer to an instance variable so we can manage removal
+            timeWedges.append(wedgeLayer)
+            
+        }
     }
     
     //MARK:- Update cycle
@@ -404,7 +440,7 @@ public enum ClockInteractionType: String {
         trackLayer.fillColor = UIColor.clear.cgColor
         pathLayer.fillColor = UIColor.clear.cgColor
         
-        updateWatchFaceRangedSegments()
+        updateWatchFaceTimeWedges()
         
         updateTrackRadialGradientLayer()
         
@@ -433,7 +469,37 @@ public enum ClockInteractionType: String {
 
     }
     
-    func updateWatchFaceRangedSegments() {
+    func updateWatchFaceTimeWedges() {
+        
+        for (index, timeWedge) in timeWedges.enumerated() {
+            
+            guard let startTime = (rangedTimes[index])["start"] else {
+                print("Expected to find a start time of type NSDate")
+                continue
+            }
+            
+            guard let endTime = (rangedTimes[index])["end"] else {
+                print("Expected to find a start time of type NSDate")
+                continue
+            }
+            
+            let tailAngle = timeToAngle(startTime as Date)
+            let headAngle = timeToAngle(endTime as Date)
+            
+            timeWedge.occupation = overallPathLayer.occupation
+            timeWedge.headAngle = headAngle
+            timeWedge.tailAngle = tailAngle
+            timeWedge.size = overallPathLayer.size
+            timeWedge.wedgeCenter = overallPathLayer.center
+            timeWedge.insetSize = inset.size
+            timeWedge.pathWidth = pathWidth
+            timeWedge.trackRadius = trackRadius
+            timeWedge.buttonRadius = buttonRadius
+            timeWedge.setNeedsLayout()
+        }
+        
+        return
+        
 //        let wedgeLayer = CAShapeLayer()
 //        wedgeLayer.occupation = (inset.size, overallPathLayer.center)
 //        let arcCenter = wedgeLayer.center
@@ -452,7 +518,7 @@ public enum ClockInteractionType: String {
 //        rangedSegmentsLayer.addSublayer(wedgeLayer)
 //        rangedSegmentsLayer.addSublayer(headLayer)
 //        rangedSegmentsLayer.addSublayer(tailLayer)
-        rangedSegmentsLayer.sublayers?.forEach({$0.removeFromSuperlayer()})
+//        rangedSegmentsLayer.sublayers?.forEach({$0.removeFromSuperlayer()})
 //
         for rangedTime in rangedTimes {
             guard let startTime = rangedTime["start"] else {
