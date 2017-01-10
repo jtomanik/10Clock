@@ -434,6 +434,7 @@ public enum ClockInteractionType: String {
     
     //MARK:- Update cycle
     open func update() {
+        print(rangedAngles)
         let mm = min(self.layer.bounds.size.height, self.layer.bounds.size.width)
         CATransaction.begin()
         self.layer.size = CGSize(width: mm, height: mm)
@@ -703,6 +704,14 @@ public enum ClockInteractionType: String {
         }
         // Check if this layer has a time wedge tag
         else if let identifier = layer.name {
+            guard let timeWedgeLayer = layer.superlayer as? TimeWedgeLayer,
+                let wedgeIndex = timeWedges.index(of: timeWedgeLayer) else
+            {
+                print("No time wedges for index")
+                super.touchesBegan(touches, with: event)
+                return
+            }
+            
             switch identifier {
             case TimeWedgeLayer.wedgeIdentifierName:
                 // Get the angles for this wedge and change them
@@ -710,12 +719,15 @@ public enum ClockInteractionType: String {
                 break
             case TimeWedgeLayer.tailIdentifierName:
                 // Find the angle
-                
+                pointMover = pointerMoverProducer({_ in self.rangedAngles[wedgeIndex].tailAngle}, {self.rangedAngles[wedgeIndex].headAngle += 0;self.rangedAngles[wedgeIndex].tailAngle += $0})
                 break
             case TimeWedgeLayer.headIdentifierName:
+                pointMover = pointerMoverProducer({ _ in self.rangedAngles[wedgeIndex].headAngle}, {self.rangedAngles[wedgeIndex].headAngle += $0; self.rangedAngles[wedgeIndex].tailAngle += 0})
                 break
             default:
                 break
+            
+                
             }
         }
         
