@@ -441,12 +441,10 @@ public enum ClockInteractionType: String {
             rangedTimes[index].startTime = startTime
             rangedTimes[index].endTime = endTime// = RangedTime(startTime: startTime, endTime: endTime)
         }
-        print(rangedTimes)
     }
     
     //MARK:- Update cycle
     open func update() {
-        print(rangedAngles)
         let mm = min(self.layer.bounds.size.height, self.layer.bounds.size.width)
         CATransaction.begin()
         self.layer.size = CGSize(width: mm, height: mm)
@@ -677,8 +675,6 @@ public enum ClockInteractionType: String {
         let pointOfTouch = touch.location(in: self)
         guard let layer = self.overallPathLayer.hitTest( pointOfTouch ) else { return }
         
-        print(layer)
-        
         var prev = pointOfTouch
         let pointerMoverProducer: (@escaping (CGPoint) -> Angle, @escaping (Angle)->()) -> (CGPoint) -> () = { g, s in
             return { p in
@@ -821,7 +817,11 @@ public enum ClockInteractionType: String {
         let dAngle = Double(angle)
         let min = CGFloat(((M_PI_2 - dAngle) / (2 * M_PI)) * (Double(clockHourTypeHours) * 60))
         let startOfToday = Calendar.current.startOfDay(for: Date())
-        let date = self.calendar.date(byAdding: .minute, value: Int(medStepFunction(min, stepSize: 5/* minute steps*/)), to: startOfToday)!
+        var stepSize: CGFloat = 5.0
+        if clockInteractionType != ClockInteractionType.exact {
+            stepSize = 15.0
+        }
+        let date = self.calendar.date(byAdding: .minute, value: Int(medStepFunction(min, stepSize: stepSize/* minute steps*/)), to: startOfToday)!
         // Now constrain the date
         let units : Set<Calendar.Component> = [.hour, .minute]
         let components = self.calendar.dateComponents(units, from: date)
