@@ -58,9 +58,9 @@ func df() -> CGFloat {
 func clockDescretization(_ val: CGFloat) -> CGFloat{
     let min:Double  = 0
     let max:Double = 2 * Double(M_PI)
-    let steps:Double = 144
-    let stepSize = (max - min) / steps
-    let nsf = floor(Double(val) / stepSize)
+    let steps:Double = 576 //96 //144 //((60*12)/5) = 144 Divide the 12 hour clock into 5 min segments
+    let stepSize = (max - min) / steps // The angle width of each segment
+    let nsf = floor(Double(val) / stepSize) //
     let rest = Double(val) - stepSize * nsf
     return CGFloat(rest > stepSize / 2 ? stepSize * (nsf + 1) : stepSize * nsf).checked
     
