@@ -11,13 +11,29 @@ import UIKit
 
 typealias HeadKnobLayer = CAShapeLayer
 typealias TailKnobLayer = CAShapeLayer
+public typealias Wedge = (tailAngle: CGFloat, headAngle: CGFloat)
 
 class TimeWedgeLayer: CAShapeLayer {
     
     typealias Angle = CGFloat
+    let fourPi =  CGFloat(4 * M_PI)
     
-    var tailAngle: CGFloat = 0
-    var headAngle: CGFloat = 0.7 * CGFloat(M_PI)
+    var wedgeAngle: Wedge = Wedge(tailAngle: 0.7 * CGFloat(M_PI), headAngle: 0) {
+        didSet {
+            if (wedgeAngle.headAngle > fourPi  +  CGFloat(M_PI_2)){
+                wedgeAngle.headAngle -= fourPi
+            }
+            if (wedgeAngle.headAngle <  CGFloat(M_PI_2) ){
+                wedgeAngle.headAngle += fourPi
+            }
+            if (wedgeAngle.tailAngle  > wedgeAngle.headAngle + fourPi){
+                wedgeAngle.tailAngle -= fourPi
+            } else if (wedgeAngle.tailAngle  < wedgeAngle.headAngle ){
+                wedgeAngle.tailAngle += fourPi
+            }
+        }
+    }
+    
     let twoPI =  CGFloat(2 * M_PI)
     var insetSize: CGSize = CGSize.zero
     var trackRadius: CGFloat = 100
@@ -38,8 +54,7 @@ class TimeWedgeLayer: CAShapeLayer {
         super.init()
         self.bounds.size = size
         self.position = center
-        self.headAngle = headAngle
-        self.tailAngle = tailAngle
+        self.wedgeAngle = Wedge(headAngle: headAngle, tailAngle: tailAngle)
         self.pathWidth = pathWidth
         self.insetSize = insetSize
         self.wedgeCenter = center
@@ -96,11 +111,11 @@ class TimeWedgeLayer: CAShapeLayer {
         wedgeLayer.path = UIBezierPath(
             arcCenter: arcCenter,
             radius: trackRadius,
-            startAngle: ( twoPI  ) -  ((tailAngle - headAngle) >= twoPI ? tailAngle - twoPI : tailAngle),
-            endAngle: ( twoPI ) -  headAngle,
+            startAngle: ( twoPI  ) -  ((wedgeAngle.tailAngle - wedgeAngle.headAngle) >= twoPI ? wedgeAngle.tailAngle - twoPI : wedgeAngle.tailAngle),
+            endAngle: ( twoPI ) -  wedgeAngle.headAngle,
             clockwise: true).cgPath
-        tailLayer.position = proj(tailAngle)
-        headLayer.position = proj(headAngle)
+        tailLayer.position = proj(wedgeAngle.tailAngle)
+        headLayer.position = proj(wedgeAngle.headAngle)
         
         guard let wedgePath = wedgeLayer.path else {
             return

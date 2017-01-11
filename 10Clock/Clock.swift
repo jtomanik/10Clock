@@ -9,7 +9,6 @@
 import Foundation
 import UIKit
 
-typealias Wedge = (tailAngle: CGFloat, headAngle: CGFloat)
 public typealias RangedTime = (startTime: Date, endTime: Date)
 
 @objc public  protocol TenClockDelegate {
@@ -62,16 +61,18 @@ public enum ClockInteractionType: String {
     
     open var rangedTimes: Array<RangedTime> = [] {
         didSet {
-            // Update the ranged angles
-            rangedAngles.removeAll()
-            
-            for rangedTime in rangedTimes {
-                let tailAngle = timeToAngle(rangedTime.startTime)
-                let headAngle = timeToAngle(rangedTime.endTime)
-                let wedgeAngle = Wedge(tailAngle: tailAngle, headAngle: headAngle)
-                rangedAngles.append(wedgeAngle)
+            if oldValue.count != rangedTimes.count {
+                // Update the ranged angles
+                rangedAngles.removeAll()
+                
+                for rangedTime in rangedTimes {
+                    let tailAngle = timeToAngle(rangedTime.startTime)
+                    let headAngle = timeToAngle(rangedTime.endTime)
+                    let wedgeAngle = Wedge(tailAngle: tailAngle, headAngle: headAngle)
+                    rangedAngles.append(wedgeAngle)
+                }
+                self.resetTimeWedges()
             }
-            self.resetTimeWedges()
             self.update()
         }
     }
@@ -406,6 +407,7 @@ public enum ClockInteractionType: String {
     
     func resetTimeWedges() {
         self.rangedSegmentsLayer.sublayers?.forEach({$0.removeFromSuperlayer()})
+        timeWedges.removeAll()
         addTimeWedges()
     }
     
@@ -430,6 +432,16 @@ public enum ClockInteractionType: String {
             timeWedges.append(wedgeLayer)
             
         }
+    }
+    
+    func updateTimesForWedges() {
+        for (index, rangedAngle) in rangedAngles.enumerated() {
+            let startTime = angleToTime(rangedAngle.tailAngle)
+            let endTime = angleToTime(rangedAngle.headAngle)
+            rangedTimes[index].startTime = startTime
+            rangedTimes[index].endTime = endTime// = RangedTime(startTime: startTime, endTime: endTime)
+        }
+        print(rangedTimes)
     }
     
     //MARK:- Update cycle
@@ -494,25 +506,11 @@ public enum ClockInteractionType: String {
         
         for (index, timeWedge) in timeWedges.enumerated() {
             
-//            guard let startTime = (rangedTimes[index])["start"] else {
-//                print("Expected to find a start time of type NSDate")
-//                continue
-//            }
-//            
-//            guard let endTime = (rangedTimes[index])["end"] else {
-//                print("Expected to find a start time of type NSDate")
-//                continue
-//            }
-            
-//            let tailAngle = timeToAngle(startTime as Date)
-//            let headAngle = timeToAngle(endTime as Date)
-            
             let tailAngle = rangedAngles[index].tailAngle
             let headAngle = rangedAngles[index].headAngle
             
             timeWedge.occupation = overallPathLayer.occupation
-            timeWedge.headAngle = headAngle
-            timeWedge.tailAngle = tailAngle
+            timeWedge.wedgeAngle = Wedge(headAngle: headAngle, tailAngle: tailAngle)
             timeWedge.size = overallPathLayer.size
             timeWedge.wedgeCenter = overallPathLayer.center
             timeWedge.insetSize = inset.size
@@ -690,6 +688,7 @@ public enum ClockInteractionType: String {
                 let v2 = CGVector(angle:g( p ))
 
                 s(clockDescretization(CGVector.signedTheta(v1, vec2: v2)))
+                self.updateTimesForWedges()
                 self.update()
             }
 
@@ -720,14 +719,52 @@ public enum ClockInteractionType: String {
                                      to:CGPoint(x: prev.x, y: self.layer.bounds.height - prev.y)).theta;
                 prev = pt;
                 return x
-                }, {self.rangedAngles[wedgeIndex].headAngle += $0; self.rangedAngles[wedgeIndex].tailAngle += $0 })
+                }, {
+                    // Check angles before setting them
+                    let headAngle = self.rangedAngles[wedgeIndex].headAngle + $0
+                    let tailAngle = self.rangedAngles[wedgeIndex].tailAngle + $0
+                    let endDate = self.angleToTime(headAngle)
+                    let startDate = self.angleToTime(tailAngle)
+                    
+                    if endDate.isGreaterThanDate(dateToCompare: startDate) {
+                        self.rangedAngles[wedgeIndex].headAngle = headAngle
+                        self.rangedAngles[wedgeIndex].tailAngle = tailAngle
+                    }
+                    
+                })
                 break
             case TimeWedgeLayer.tailIdentifierName:
                 // Find the angle
-                pointMover = pointerMoverProducer({_ in self.rangedAngles[wedgeIndex].tailAngle}, {self.rangedAngles[wedgeIndex].headAngle += 0;self.rangedAngles[wedgeIndex].tailAngle += $0})
+                pointMover = pointerMoverProducer({_ in self.rangedAngles[wedgeIndex].tailAngle},
+                                                  {
+                                                    // Check angles before setting them
+                                                    let headAngle = self.rangedAngles[wedgeIndex].headAngle
+                                                    let tailAngle = self.rangedAngles[wedgeIndex].tailAngle + $0
+                                                    let endDate = self.angleToTime(headAngle)
+                                                    let startDate = self.angleToTime(tailAngle)
+                                                    
+                                                    if endDate.isGreaterThanDate(dateToCompare: startDate) {
+                                                        self.rangedAngles[wedgeIndex].headAngle = headAngle
+                                                        self.rangedAngles[wedgeIndex].tailAngle = tailAngle
+                                                    }
+                                                }
+                )
                 break
             case TimeWedgeLayer.headIdentifierName:
-                pointMover = pointerMoverProducer({ _ in self.rangedAngles[wedgeIndex].headAngle}, {self.rangedAngles[wedgeIndex].headAngle += $0; self.rangedAngles[wedgeIndex].tailAngle += 0})
+                pointMover = pointerMoverProducer({ _ in self.rangedAngles[wedgeIndex].headAngle},
+                                                  {
+                                                    // Check angles before setting them
+                                                    let headAngle = self.rangedAngles[wedgeIndex].headAngle + $0
+                                                    let tailAngle = self.rangedAngles[wedgeIndex].tailAngle
+                                                    let endDate = self.angleToTime(headAngle)
+                                                    let startDate = self.angleToTime(tailAngle)
+                                                    
+                                                    if endDate.isGreaterThanDate(dateToCompare: startDate) {
+                                                        self.rangedAngles[wedgeIndex].headAngle = headAngle
+                                                        self.rangedAngles[wedgeIndex].tailAngle = tailAngle
+                                                    }
+                                                }
+                )
                 break
             default:
                 break
@@ -735,47 +772,6 @@ public enum ClockInteractionType: String {
                 
             }
         }
-        
-//        if layer.isKind(of: TimeWedgeLayer.self) {
-//            let timeWedge = layer as! TimeWedgeLayer
-//            let headLayer = timeWedge.headLayer
-//            let tailLayer = timeWedge.tailLayer
-//            
-//        }
-
-//        switch(layer){
-//        case exactTimeIndicatorTouchLayer:
-//            if (shouldMoveHead) {
-//                pointMover = pointerMoverProducer({ _ in self.headAngle}, {self.headAngle += $0; self.tailAngle += 0})
-//            } else {
-//                pointMover = nil
-//            }
-        
-//        case headLayer:
-//            if (shouldMoveHead) {
-//                pointMover = pointerMoverProducer({ _ in self.headAngle}, {self.headAngle += $0; self.tailAngle += 0})
-//            } else {
-//                pointMover = nil
-//            }
-//        case tailLayer:
-//            if (shouldMoveHead) {
-//                pointMover = pointerMoverProducer({_ in self.tailAngle}, {self.headAngle += 0;self.tailAngle += $0})
-//            } else {
-//                    pointMover = nil
-//            }
-//        case pathLayer:
-//            if (shouldMoveHead) {
-//            		pointMover = pointerMoverProducer({ pt in
-//                		let x = CGVector(from: self.bounds.center,
-//                		                 to:CGPoint(x: prev.x, y: self.layer.bounds.height - prev.y)).theta;
-//                    prev = pt;
-//                    return x
-//                    }, {self.headAngle += $0; self.tailAngle += $0 })
-//            } else {
-//                    pointMover = nil
-//            }
-//        default: break
-//        }
 
         super.touchesBegan(touches, with: event)
 
@@ -825,6 +821,10 @@ public enum ClockInteractionType: String {
         let dAngle = Double(angle)
         let min = CGFloat(((M_PI_2 - dAngle) / (2 * M_PI)) * (Double(clockHourTypeHours) * 60))
         let startOfToday = Calendar.current.startOfDay(for: Date())
-        return self.calendar.date(byAdding: .minute, value: Int(medStepFunction(min, stepSize: 5/* minute steps*/)), to: startOfToday)!
+        let date = self.calendar.date(byAdding: .minute, value: Int(medStepFunction(min, stepSize: 5/* minute steps*/)), to: startOfToday)!
+        // Now constrain the date
+        let units : Set<Calendar.Component> = [.hour, .minute]
+        let components = self.calendar.dateComponents(units, from: date)
+        return self.calendar.date(from: components)!
     }
 }
