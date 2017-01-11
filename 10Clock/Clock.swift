@@ -11,12 +11,17 @@ import UIKit
 
 public typealias RangedTime = (startTime: Date, endTime: Date)
 
-@objc public  protocol TenClockDelegate {
+public protocol TenClockDelegate: class {
     //Executed for every touch.
-    @objc optional func timesUpdated(_ clock:TenClock, startDate:Date,  endDate:Date  ) -> ()
+    func timesUpdated(_ clock:TenClock, startDate:Date,  endDate:Date  ) -> ()
     //Executed after the user lifts their finger from the control.
-    @objc optional func timesChanged(_ clock:TenClock, startDate:Date,  endDate:Date  ) -> ()
+    func timesChanged(_ clock:TenClock, startDate:Date,  endDate:Date  ) -> ()
+    //Executed for every touch.
+    func rangedTimesUpdated(_ clock:TenClock, rangedTimes: Array<RangedTime> ) -> ()
+    //Executed after the user lifts their finger from the control.
+    func rangedTimesChanged(_ clock:TenClock, rangedTimes: Array<RangedTime> ) -> ()
 }
+
 func medStepFunction(_ val: CGFloat, stepSize:CGFloat) -> CGFloat{
     let dStepSize = Double(stepSize)
     let dval  = Double(val)
@@ -779,14 +784,25 @@ public enum ClockInteractionType: String {
     
     override open func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         pointMover = nil
-        delegate?.timesChanged?(self, startDate: self.startDate, endDate: endDate)
+        switch clockInteractionType {
+        case .exact:
+            delegate?.timesChanged(self, startDate: self.startDate, endDate: endDate)
+        case .multiRange, .singleRange:
+            delegate?.rangedTimesChanged(self, rangedTimes: self.rangedTimes)
+        }
+        
         super.touchesEnded(touches, with: event)
     }
     
     override open func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first, let pointMover = pointMover else { return }
         pointMover(touch.location(in: self))
-    	delegate?.timesUpdated?(self, startDate: self.startDate, endDate: endDate)
+        switch clockInteractionType {
+        case .exact:
+            delegate?.timesUpdated(self, startDate: self.startDate, endDate: endDate)
+        case .multiRange, .singleRange:
+            delegate?.rangedTimesUpdated(self, rangedTimes: self.rangedTimes)
+        }
         super.touchesMoved(touches, with: event)
     }
     
@@ -813,7 +829,7 @@ public enum ClockInteractionType: String {
     }
     
     // input an angle, output: Date
-    func angleToTime(_ angle: Angle) -> Date{
+    func angleToTime(_ angle: Angle) -> Date {
         let dAngle = Double(angle)
         let min = CGFloat(((M_PI_2 - dAngle) / (2 * M_PI)) * (Double(clockHourTypeHours) * 60))
         let startOfToday = Calendar.current.startOfDay(for: Date())

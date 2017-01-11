@@ -88,6 +88,13 @@ class ViewController: UITableViewController, TenClockDelegate {
         self.endTime.text = dateFormatter.string(from: endDate)
         
     }
+    func rangedTimesUpdated(_ clock:TenClock, rangedTimes: Array<RangedTime> ) -> () {
+        
+    }
+    
+    func rangedTimesChanged(_ clock:TenClock, rangedTimes: Array<RangedTime> ) -> () {
+        print(rangedTimes.description)
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -102,9 +109,9 @@ class ViewController: UITableViewController, TenClockDelegate {
         clock.gradientColors = [UIColor.red, UIColor.blue]
         clock.gradientLocations = [0.5, 1.0]
         clock.rangedTimes = [
-            (startTime: Date(),                             endTime: Date().addingTimeInterval(60*60*3))
-//            (startTime: Date().addingTimeInterval(60*60*4), endTime: Date().addingTimeInterval(60*60*7)),
-//            (startTime: Date().addingTimeInterval(60*60*8), endTime: Date().addingTimeInterval(60*60*12))
+            (startTime: Date(),                             endTime: Date().addingTimeInterval(60*60*3)),
+            (startTime: Date().addingTimeInterval(60*60*4), endTime: Date().addingTimeInterval(60*60*7)),
+            (startTime: Date().addingTimeInterval(60*60*8), endTime: Date().addingTimeInterval(60*60*12))
         ]
         clock.delegate = self
     }
