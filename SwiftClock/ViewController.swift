@@ -88,12 +88,12 @@ class ViewController: UITableViewController, TenClockDelegate {
         self.endTime.text = dateFormatter.string(from: endDate)
         
     }
-    func rangedTimesUpdated(_ clock:TenClock, rangedTimes: Array<RangedTime> ) -> () {
+    func rangedTimesUpdated(_ clock:TenClock, rangedTimes: Array<RangedTime>, selectedIndex: Int ) -> () {
         
     }
     
-    func rangedTimesChanged(_ clock:TenClock, rangedTimes: Array<RangedTime> ) -> () {
-        print(rangedTimes.description)
+    func rangedTimesChanged(_ clock:TenClock, rangedTimes: Array<RangedTime>, selectedIndex: Int ) -> () {
+        print("Wedge: \(selectedIndex): \(rangedTimes.description)")
     }
     
     override func viewDidLoad() {

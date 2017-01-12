@@ -17,9 +17,9 @@ public protocol TenClockDelegate: class {
     //Executed after the user lifts their finger from the control.
     func timesChanged(_ clock:TenClock, startDate:Date,  endDate:Date  ) -> ()
     //Executed for every touch.
-    func rangedTimesUpdated(_ clock:TenClock, rangedTimes: Array<RangedTime> ) -> ()
+    func rangedTimesUpdated(_ clock:TenClock, rangedTimes: Array<RangedTime>, selectedIndex: Int ) -> ()
     //Executed after the user lifts their finger from the control.
-    func rangedTimesChanged(_ clock:TenClock, rangedTimes: Array<RangedTime> ) -> ()
+    func rangedTimesChanged(_ clock:TenClock, rangedTimes: Array<RangedTime>, selectedIndex: Int ) -> ()
 }
 
 func medStepFunction(_ val: CGFloat, stepSize:CGFloat) -> CGFloat{
@@ -323,7 +323,8 @@ public enum ClockInteractionType: String {
     }()
     
     var timeWedges: Array<TimeWedgeLayer> = []
-
+    var selectedTimeWedgeIndex = 0
+    
     //MARK:- Initialisation and setup
     override public init(frame: CGRect) {
         super.init(frame:frame)
@@ -655,8 +656,21 @@ public enum ClockInteractionType: String {
         endTimeTextLayer.contentsScale = UIScreen.main.scale
         endTimeTextLayer.font = cgFont
         
-        let startTimeString = "\(watchFaceDateFormatter.string(from: startDate))"
-        let endTimeString = "\(watchFaceDateFormatter.string(from: endDate))"
+        var startTimeString = "\(watchFaceDateFormatter.string(from: startDate))"
+        var endTimeString = "\(watchFaceDateFormatter.string(from: endDate))"
+        
+        switch clockInteractionType {
+        case .exact:
+                startTimeString = "\(watchFaceDateFormatter.string(from: startDate))"
+                endTimeString = "\(watchFaceDateFormatter.string(from: endDate))"
+        case .singleRange, .multiRange:
+            if ( self.rangedTimes.indices.contains(selectedTimeWedgeIndex)) {
+                let wedgeTimes = rangedTimes[selectedTimeWedgeIndex]
+                startTimeString = "\(watchFaceDateFormatter.string(from: wedgeTimes.startTime))"
+                endTimeString = "\(watchFaceDateFormatter.string(from: wedgeTimes.endTime))"
+            }
+        }
+        
         
         let startTimeRect = (startTimeString as NSString).boundingRect(with: titleTextInset.size, options: NSStringDrawingOptions.usesLineFragmentOrigin, attributes: [NSFontAttributeName: self.clockFaceFont], context: nil)
         let endTimeRect = (endTimeString as NSString).boundingRect(with: titleTextInset.size, options: NSStringDrawingOptions.usesLineFragmentOrigin, attributes: [NSFontAttributeName: self.clockFaceFont], context: nil)
@@ -759,6 +773,8 @@ public enum ClockInteractionType: String {
                 return
             }
             
+            selectedTimeWedgeIndex = wedgeIndex
+            
             switch identifier {
             case TimeWedgeLayer.wedgeIdentifierName:
                 // Get the angles for this wedge and change them
@@ -835,7 +851,7 @@ public enum ClockInteractionType: String {
         case .exact:
             delegate?.timesChanged(self, startDate: self.startDate, endDate: endDate)
         case .multiRange, .singleRange:
-            delegate?.rangedTimesChanged(self, rangedTimes: self.rangedTimes)
+            delegate?.rangedTimesChanged(self, rangedTimes: self.rangedTimes, selectedIndex: selectedTimeWedgeIndex)
         }
         
         super.touchesEnded(touches, with: event)
@@ -848,7 +864,7 @@ public enum ClockInteractionType: String {
         case .exact:
             delegate?.timesUpdated(self, startDate: self.startDate, endDate: endDate)
         case .multiRange, .singleRange:
-            delegate?.rangedTimesUpdated(self, rangedTimes: self.rangedTimes)
+            delegate?.rangedTimesUpdated(self, rangedTimes: self.rangedTimes, selectedIndex: selectedTimeWedgeIndex)
         }
         super.touchesMoved(touches, with: event)
     }
