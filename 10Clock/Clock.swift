@@ -753,7 +753,7 @@ public enum ClockInteractionType: String {
         let pointOfTouch = touch.location(in: self)
         guard let layer = self.overallPathLayer.hitTest( pointOfTouch ) else { return }
         
-        var prev = pointOfTouch
+//        var prev = pointOfTouch
         let pointerMoverProducer: (@escaping (CGPoint) -> Angle, @escaping (Angle)->()) -> (CGPoint) -> () = { g, s in
             return { p in
                 let c = self.layer.center
