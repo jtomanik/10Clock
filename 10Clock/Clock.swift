@@ -283,7 +283,9 @@ public enum ClockInteractionType: String {
     var topHeadLayer = CAShapeLayer()
     var topTailLayer = CAShapeLayer()
     let numeralsLayer = CALayer()
-    var titleTextLayer = CATextLayer()
+    var startTimeTextLayer = CATextLayer()
+    var endTimeTextLayer = CATextLayer()
+    var downArrowImageLayer = CALayer()
     var overallPathLayer = CALayer()
     var centerBackgroundLayer = CAShapeLayer()
     
@@ -402,16 +404,26 @@ public enum ClockInteractionType: String {
         switch self.clockInteractionType {
         case .exact:
             overallPathLayer.addSublayer(exactTimeIndicatorTouchLayer)
-            layer.addSublayer(titleTextLayer)
+            layer.addSublayer(startTimeTextLayer)
             layer.addSublayer(overallPathLayer)
             layer.addSublayer(exactTimeIndicatorLayer)
         default:
             overallPathLayer.addSublayer(rangedSegmentsLayer)
             resetTimeWedges()
-            layer.addSublayer(titleTextLayer)
+            layer.addSublayer(startTimeTextLayer)
+            layer.addSublayer(endTimeTextLayer)
+            layer.addSublayer(downArrowImageLayer)
             layer.addSublayer(overallPathLayer)
+            // Load the down arrow for the multi range mode
+            downArrowImageLayer.contents = UIImage(named: "downIcon")?.cgImage
+            downArrowImageLayer.contentsGravity = kCAGravityCenter
+            downArrowImageLayer.size = CGSize(width: 18.0, height: 18.0)
+//            downArrowImageLayer.contentsScale = UIScreen.main.scale
         }
         
+        // Update scale factor for all view
+        self.layer.sublayers?.forEach({$0.contentsScale = UIScreen.main.scale})
+        self.layer.applyChangeToAllSublayers{$0.contentsScale = UIScreen.main.scale}
         strokeColor = disabledFormattedColor(tintColor)
     }
     
@@ -478,7 +490,8 @@ public enum ClockInteractionType: String {
         repLayer2.occupation  =  (internalInset.size, overallPathLayer.center)
         centerBackgroundLayer.occupation = (internalRect.size, overallPathLayer.center)
         numeralsLayer.occupation = (numeralInset.size, layer.center)
-
+        downArrowImageLayer.position = layer.center
+        
         trackLayer.fillColor = UIColor.clear.cgColor
         pathLayer.fillColor = UIColor.clear.cgColor
         
@@ -630,24 +643,45 @@ public enum ClockInteractionType: String {
     func updateWatchFaceTitle() {
         
         let cgFont = CTFontCreateWithName(self.clockFaceFont.fontName as CFString?, self.clockFaceFont.pointSize/2,nil)
-        titleTextLayer.fontSize = self.clockFaceFont.pointSize
-        titleTextLayer.alignmentMode = kCAAlignmentCenter
-        titleTextLayer.foregroundColor = disabledFormattedColor(centerTextColor ?? tintColor).cgColor
-        titleTextLayer.contentsScale = UIScreen.main.scale
-        titleTextLayer.font = cgFont
+        startTimeTextLayer.fontSize = self.clockFaceFont.pointSize
+        startTimeTextLayer.alignmentMode = kCAAlignmentCenter
+        startTimeTextLayer.foregroundColor = disabledFormattedColor(centerTextColor ?? tintColor).cgColor
+        startTimeTextLayer.contentsScale = UIScreen.main.scale
+        startTimeTextLayer.font = cgFont
         
-        var titleString: String;
+        endTimeTextLayer.fontSize = self.clockFaceFont.pointSize
+        endTimeTextLayer.alignmentMode = kCAAlignmentCenter
+        endTimeTextLayer.foregroundColor = disabledFormattedColor(centerTextColor ?? tintColor).cgColor
+        endTimeTextLayer.contentsScale = UIScreen.main.scale
+        endTimeTextLayer.font = cgFont
+        
+        let startTimeString = "\(watchFaceDateFormatter.string(from: startDate))"
+        let endTimeString = "\(watchFaceDateFormatter.string(from: endDate))"
+        
+        let startTimeRect = (startTimeString as NSString).boundingRect(with: titleTextInset.size, options: NSStringDrawingOptions.usesLineFragmentOrigin, attributes: [NSFontAttributeName: self.clockFaceFont], context: nil)
+        let endTimeRect = (endTimeString as NSString).boundingRect(with: titleTextInset.size, options: NSStringDrawingOptions.usesLineFragmentOrigin, attributes: [NSFontAttributeName: self.clockFaceFont], context: nil)
+        
+        var startTimePosition = layer.center
+        var endTimePosition = layer.center
+        
+        let centerSpacerHeight = CGFloat(22.0)
+        
         switch clockInteractionType {
-        case .exact:
-             titleString = "\(watchFaceDateFormatter.string(from: endDate))"
+        case .multiRange:
+            startTimePosition = CGPoint(x: layer.center.x, y: layer.center.y - centerSpacerHeight)
+            endTimePosition = CGPoint(x: layer.center.x, y: layer.center.y + centerSpacerHeight)
         default:
-            titleString = "\(watchFaceDateFormatter.string(from: startDate))\n↓\n\(watchFaceDateFormatter.string(from: endDate))"
+            break
+            
         }
         
-        let titleRect = (titleString as NSString).boundingRect(with: titleTextInset.size, options: NSStringDrawingOptions.usesLineFragmentOrigin, attributes: [NSFontAttributeName: self.clockFaceFont], context: nil)
-        titleTextLayer.string = titleString
-        titleTextLayer.bounds.size = titleRect.size
-        titleTextLayer.position = layer.center
+        startTimeTextLayer.string = startTimeString
+        startTimeTextLayer.bounds.size = startTimeRect.size
+        startTimeTextLayer.position = startTimePosition
+        
+        endTimeTextLayer.string = endTimeString
+        endTimeTextLayer.bounds.size = endTimeRect.size
+        endTimeTextLayer.position = endTimePosition
 
     }
     
