@@ -55,10 +55,10 @@ typealias Angle = CGFloat
 func df() -> CGFloat {
     return    CGFloat(drand48()).checked
 }
-func clockDescretization(_ val: CGFloat) -> CGFloat{
+func clockDescretization(_ val: CGFloat, minuteStep: Int, hours: Int) -> CGFloat{
     let min:Double  = 0
     let max:Double = 2 * Double(M_PI)
-    let steps:Double = 576 //96 //144 //((60*12)/5) = 144 Divide the 12 hour clock into 5 min segments
+    let steps:Double = ( 60.0 * Double(hours) ) / Double(minuteStep) // 48 //576 //96 //144 //((60*12)/5) = 144 Divide the 12 hour clock into 5 min segments
     let stepSize = (max - min) / steps // The angle width of each segment
     let nsf = floor(Double(val) / stepSize) //
     let rest = Double(val) - stepSize * nsf

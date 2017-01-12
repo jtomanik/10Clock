@@ -86,6 +86,12 @@ public enum ClockInteractionType: String {
     
     open var clockInteractionType: ClockInteractionType = .exact {
         didSet {
+            switch clockInteractionType {
+            case .exact:
+                minuteStep = 5
+            case .singleRange, .multiRange:
+                minuteStep = 30
+            }
             self.setup()
         }
     }
@@ -188,6 +194,8 @@ public enum ClockInteractionType: String {
     }()
     
     var clockHourTypeHours : Int = 12
+    
+    var minuteStep = 5
     
     var headAngle: CGFloat = 0 {
         didSet{
@@ -323,7 +331,11 @@ public enum ClockInteractionType: String {
     }()
     
     var timeWedges: Array<TimeWedgeLayer> = []
-    var selectedTimeWedgeIndex = 0
+    var selectedTimeWedgeIndex = 0 {
+        didSet {
+            self.setNeedsLayout()
+        }
+    }
     
     //MARK:- Initialisation and setup
     override public init(frame: CGRect) {
@@ -749,7 +761,7 @@ public enum ClockInteractionType: String {
                 let v1 = CGVector(from: c, to: computedP)
                 let v2 = CGVector(angle:g( p ))
 
-                s(clockDescretization(CGVector.signedTheta(v1, vec2: v2)))
+                s(clockDescretization(CGVector.signedTheta(v1, vec2: v2), minuteStep: self.minuteStep, hours: self.clockHourTypeHours))
                 self.updateTimesForWedges()
                 self.update()
             }
@@ -760,6 +772,7 @@ public enum ClockInteractionType: String {
             if (shouldMoveHead) {
                 pointMover = pointerMoverProducer({ _ in self.headAngle}, {self.headAngle += $0; self.tailAngle += 0})
             } else {
+            
                 pointMover = nil
             }
         }
@@ -772,17 +785,18 @@ public enum ClockInteractionType: String {
                 super.touchesBegan(touches, with: event)
                 return
             }
-            
             selectedTimeWedgeIndex = wedgeIndex
             
             switch identifier {
             case TimeWedgeLayer.wedgeIdentifierName:
                 // Get the angles for this wedge and change them
                 pointMover = pointerMoverProducer({ pt in
-                    let x = CGVector(from: self.bounds.center,
-                                     to:CGPoint(x: prev.x, y: self.layer.bounds.height - prev.y)).theta;
-                prev = pt;
-                return x
+                    let x = CGVector(
+                        from: self.bounds.center,
+                        to:CGPoint(x: prev.x, y: self.layer.bounds.height - prev.y)
+                    ).theta;
+                    prev = pt;
+                    return x
                 }, {
                     // Check angles before setting them
                     let headAngle = self.rangedAngles[wedgeIndex].headAngle + $0
@@ -896,10 +910,7 @@ public enum ClockInteractionType: String {
         let dAngle = Double(angle)
         let min = CGFloat(((M_PI_2 - dAngle) / (2 * M_PI)) * (Double(clockHourTypeHours) * 60))
         let startOfToday = Calendar.current.startOfDay(for: Date())
-        var stepSize: CGFloat = 5.0
-        if clockInteractionType != ClockInteractionType.exact {
-            stepSize = 15.0
-        }
+        let stepSize: CGFloat = CGFloat(self.minuteStep)
         let date = self.calendar.date(byAdding: .minute, value: Int(medStepFunction(min, stepSize: stepSize/* minute steps*/)), to: startOfToday)!
         // Now constrain the date
         let units : Set<Calendar.Component> = [.hour, .minute]
