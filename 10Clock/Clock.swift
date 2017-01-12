@@ -789,6 +789,7 @@ public enum ClockInteractionType: String {
             
             switch identifier {
             case TimeWedgeLayer.wedgeIdentifierName:
+                break
                 // Get the angles for this wedge and change them
                 pointMover = pointerMoverProducer({ pt in
                     let x = CGVector(
