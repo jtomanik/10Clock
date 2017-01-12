@@ -404,7 +404,7 @@ public enum ClockInteractionType: String {
         switch self.clockInteractionType {
         case .exact:
             overallPathLayer.addSublayer(exactTimeIndicatorTouchLayer)
-            layer.addSublayer(startTimeTextLayer)
+            layer.addSublayer(endTimeTextLayer)
             layer.addSublayer(overallPathLayer)
             layer.addSublayer(exactTimeIndicatorLayer)
         default:
