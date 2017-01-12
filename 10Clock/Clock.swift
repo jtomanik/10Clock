@@ -791,27 +791,27 @@ public enum ClockInteractionType: String {
             case TimeWedgeLayer.wedgeIdentifierName:
                 break
                 // Get the angles for this wedge and change them
-                pointMover = pointerMoverProducer({ pt in
-                    let x = CGVector(
-                        from: self.bounds.center,
-                        to:CGPoint(x: prev.x, y: self.layer.bounds.height - prev.y)
-                    ).theta;
-                    prev = pt;
-                    return x
-                }, {
-                    // Check angles before setting them
-                    let headAngle = self.rangedAngles[wedgeIndex].headAngle + $0
-                    let tailAngle = self.rangedAngles[wedgeIndex].tailAngle + $0
-                    let endDate = self.angleToTime(headAngle)
-                    let startDate = self.angleToTime(tailAngle)
-                    
-                    if endDate.isGreaterThanDate(dateToCompare: startDate) {
-                        self.rangedAngles[wedgeIndex].headAngle = headAngle
-                        self.rangedAngles[wedgeIndex].tailAngle = tailAngle
-                    }
-                    
-                })
-                break
+//                pointMover = pointerMoverProducer({ pt in
+//                    let x = CGVector(
+//                        from: self.bounds.center,
+//                        to:CGPoint(x: prev.x, y: self.layer.bounds.height - prev.y)
+//                    ).theta;
+//                    prev = pt;
+//                    return x
+//                }, {
+//                    // Check angles before setting them
+//                    let headAngle = self.rangedAngles[wedgeIndex].headAngle + $0
+//                    let tailAngle = self.rangedAngles[wedgeIndex].tailAngle + $0
+//                    let endDate = self.angleToTime(headAngle)
+//                    let startDate = self.angleToTime(tailAngle)
+//                    
+//                    if endDate.isGreaterThanDate(dateToCompare: startDate) {
+//                        self.rangedAngles[wedgeIndex].headAngle = headAngle
+//                        self.rangedAngles[wedgeIndex].tailAngle = tailAngle
+//                    }
+//                    
+//                })
+//                break
             case TimeWedgeLayer.tailIdentifierName:
                 // Find the angle
                 pointMover = pointerMoverProducer({_ in self.rangedAngles[wedgeIndex].tailAngle},
