@@ -252,6 +252,10 @@ public enum ClockInteractionType: String {
     var inset:CGRect{
         return self.layer.bounds.insetBy(dx: insetAmount, dy: insetAmount)
     }
+    var internalRect:CGRect{
+        let reInsetAmount = trackWidth / 2
+        return self.inset.insetBy(dx: reInsetAmount, dy: reInsetAmount)
+    }
     var internalInset:CGRect{
         let reInsetAmount = trackWidth / 2 + internalShift
         return self.inset.insetBy(dx: reInsetAmount, dy: reInsetAmount)
@@ -281,6 +285,7 @@ public enum ClockInteractionType: String {
     let numeralsLayer = CALayer()
     var titleTextLayer = CATextLayer()
     var overallPathLayer = CALayer()
+    var centerBackgroundLayer = CAShapeLayer()
     
     // Container layer for ranged time segments
     var rangedSegmentsLayer = CALayer()
@@ -379,10 +384,10 @@ public enum ClockInteractionType: String {
     func createSublayers() {
 //        layer.addSublayer(repLayer2)
 //        layer.addSublayer(repLayer)
+        layer.addSublayer(centerBackgroundLayer)
         layer.addSublayer(numeralsLayer)
         layer.addSublayer(trackLayer)
         layer.addSublayer(trackRadialGradientLayer)
-        
         switch self.gradientType {
         case .linear:
             layer.addSublayer(gradientLayer)
@@ -471,11 +476,13 @@ public enum ClockInteractionType: String {
         
         repLayer.occupation = (internalInset.size, overallPathLayer.center)
         repLayer2.occupation  =  (internalInset.size, overallPathLayer.center)
+        centerBackgroundLayer.occupation = (internalRect.size, overallPathLayer.center)
         numeralsLayer.occupation = (numeralInset.size, layer.center)
 
         trackLayer.fillColor = UIColor.clear.cgColor
         pathLayer.fillColor = UIColor.clear.cgColor
         
+        updateCenterBackgroundLayer()
         updateWatchFaceTimeWedges()
         
         updateTrackRadialGradientLayer()
@@ -503,6 +510,12 @@ public enum ClockInteractionType: String {
         
         CATransaction.commit()
 
+    }
+    
+    func updateCenterBackgroundLayer() {
+        let circle = UIBezierPath(ovalIn: CGRect(origin: CGPoint(x: 0, y: 0), size: self.centerBackgroundLayer.size))
+        centerBackgroundLayer.path = circle.cgPath
+        centerBackgroundLayer.fillColor = UIColor(red:0.890, green:0.965, blue:0.949, alpha:1).cgColor
     }
     
     func updateWatchFaceTimeWedges() {
