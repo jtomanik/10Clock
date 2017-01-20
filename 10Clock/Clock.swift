@@ -403,20 +403,21 @@ public enum ClockInteractionType: String {
         layer.addSublayer(numeralsLayer)
         layer.addSublayer(trackLayer)
         layer.addSublayer(trackRadialGradientLayer)
-        switch self.gradientType {
-        case .linear:
-            layer.addSublayer(gradientLayer)
-//            gradientLayer.addSublayer(topHeadLayer)
-//            gradientLayer.addSublayer(topTailLayer)
-        case .radial:
-            layer.addSublayer(radialGradientLayer)
-//            radialGradientLayer.addSublayer(topHeadLayer)
-//            radialGradientLayer.addSublayer(topTailLayer)
-        }
+//        switch self.gradientType {
+//        case .linear:
+////            layer.addSublayer(gradientLayer)
+////            gradientLayer.addSublayer(topHeadLayer)
+////            gradientLayer.addSublayer(topTailLayer)
+//        case .radial:
+////            layer.addSublayer(radialGradientLayer)
+////            radialGradientLayer.addSublayer(topHeadLayer)
+////            radialGradientLayer.addSublayer(topTailLayer)
+//        }
         
         switch self.clockInteractionType {
         case .exact:
             overallPathLayer.addSublayer(exactTimeIndicatorTouchLayer)
+            layer.addSublayer(radialGradientLayer)
             layer.addSublayer(endTimeTextLayer)
             layer.addSublayer(overallPathLayer)
             layer.addSublayer(exactTimeIndicatorLayer)
@@ -477,7 +478,7 @@ public enum ClockInteractionType: String {
         
         CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
         if self.gradientType == .linear {
-            updateGradientLayer()
+//            updateGradientLayer()
         } else {
 //            updateRadialGradientLayer()
         }
@@ -485,6 +486,7 @@ public enum ClockInteractionType: String {
         
         switch clockInteractionType {
         case .exact:
+            updateRadialGradientLayer()
             updateSingleDialLayerPath()
         default:
             break

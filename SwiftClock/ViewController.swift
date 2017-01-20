@@ -113,6 +113,7 @@ class ViewController: UITableViewController, TenClockDelegate {
             (startTime: Date().addingTimeInterval(60*60*4), endTime: Date().addingTimeInterval(60*60*7)),
             (startTime: Date().addingTimeInterval(60*60*8), endTime: Date().addingTimeInterval(60*60*12))
         ]
+        clock.clockInteractionType = .exact
         clock.delegate = self
     }
     override func viewWillAppear(_ animated: Bool) {
