@@ -440,50 +440,12 @@ public enum ClockInteractionType: String {
         strokeColor = disabledFormattedColor(tintColor)
     }
     
-    func resetTimeWedges() {
-        self.rangedSegmentsLayer.sublayers?.forEach({$0.removeFromSuperlayer()})
-        timeWedges.removeAll()
-        addTimeWedges()
-    }
-    
-    func addTimeWedges() {
-        for rangedAngle in rangedAngles {
-//            let tailAngle = timeToAngle(startTime as Date)
-//            let headAngle = timeToAngle(endTime as Date)
-            
-            let wedgeLayer = TimeWedgeLayer(headAngle: rangedAngle.tailAngle,
-                                            tailAngle: rangedAngle.headAngle,
-                                            size: overallPathLayer.size,
-                                            wedgeCenter: overallPathLayer.center,
-                                            insetSize: inset.size,
-                                            pathWidth: pathWidth,
-                                            trackRadius: trackRadius,
-                                            buttonRadius: buttonRadius)
-            
-            
-            rangedSegmentsLayer.addSublayer(wedgeLayer)
-            
-            // Add the layer to an instance variable so we can manage removal
-            timeWedges.append(wedgeLayer)
-            
-        }
-    }
-    
-    func updateTimesForWedges() {
-        for (index, rangedAngle) in rangedAngles.enumerated() {
-            let startTime = angleToTime(rangedAngle.tailAngle)
-            let endTime = angleToTime(rangedAngle.headAngle)
-            rangedTimes[index].startTime = startTime
-            rangedTimes[index].endTime = endTime// = RangedTime(startTime: startTime, endTime: endTime)
-        }
-    }
-    
     //MARK:- Update cycle
     open func update() {
         let mm = min(self.layer.bounds.size.height, self.layer.bounds.size.width)
         CATransaction.begin()
         self.layer.size = CGSize(width: mm, height: mm)
-
+        
         strokeColor = disabledFormattedColor(tintColor)
         overallPathLayer.occupation = layer.occupation
         rangedSegmentsLayer.occupation = layer.occupation
@@ -496,7 +458,7 @@ public enum ClockInteractionType: String {
         }
         
         trackLayer.occupation = (inset.size, layer.center)
-
+        
         pathLayer.occupation = (inset.size, overallPathLayer.center)
         
         repLayer.occupation = (internalInset.size, overallPathLayer.center)
@@ -517,7 +479,7 @@ public enum ClockInteractionType: String {
         if self.gradientType == .linear {
             updateGradientLayer()
         } else {
-            updateRadialGradientLayer()
+//            updateRadialGradientLayer()
         }
         updateTrackLayerPath()
         
@@ -526,16 +488,75 @@ public enum ClockInteractionType: String {
             updateSingleDialLayerPath()
         default:
             break
-//            updatePathLayerPath()
-//            updateHeadTailLayers()
+            //            updatePathLayerPath()
+            //            updateHeadTailLayers()
         }
         
-//        updateWatchFaceTicks()
+        //        updateWatchFaceTicks()
         updateWatchFaceNumerals()
         updateWatchFaceTitle()
         
         CATransaction.commit()
-
+        
+    }
+    
+    func resetTimeWedges() {
+        self.rangedSegmentsLayer.sublayers?.forEach({$0.removeFromSuperlayer()})
+        timeWedges.removeAll()
+        addTimeWedges()
+    }
+    
+    func addTimeWedges() {
+        for rangedAngle in rangedAngles {
+//            let tailAngle = timeToAngle(startTime as Date)
+//            let headAngle = timeToAngle(endTime as Date)
+            
+            let wedgeLayer = TimeWedgeLayer(headAngle: rangedAngle.tailAngle,
+                                            tailAngle: rangedAngle.headAngle,
+                                            size: overallPathLayer.size,
+                                            wedgeCenter: overallPathLayer.center,
+                                            insetSize: inset.size,
+                                            pathWidth: pathWidth,
+                                            trackRadius: trackRadius,
+                                            buttonRadius: buttonRadius,
+                                            gradientColors: gradientColors,
+                                            gradientLocations: gradientLocations)
+            
+            
+            
+            rangedSegmentsLayer.addSublayer(wedgeLayer)
+            
+            // Add the layer to an instance variable so we can manage removal
+            timeWedges.append(wedgeLayer)
+            
+        }
+    }
+    
+    func removeTimeWedge(at index: Int) {
+        if timeWedges.indices.contains(index) {
+            (timeWedges[index] as TimeWedgeLayer).removeFromSuperlayer()
+            timeWedges.remove(at: index)
+        }
+        if rangedAngles.indices.contains(index) {
+            rangedAngles.remove(at: index)
+        }
+        if rangedTimes.indices.contains(index) {
+            rangedTimes.remove(at: index)
+        }
+        if timeWedges.count == rangedAngles.count && rangedAngles.count == rangedTimes.count {
+            print("Removed segment without error")
+        } else {
+            print("Error removing segment")
+        }
+    }
+    
+    func updateTimesForWedges() {
+        for (index, rangedAngle) in rangedAngles.enumerated() {
+            let startTime = angleToTime(rangedAngle.tailAngle)
+            let endTime = angleToTime(rangedAngle.headAngle)
+            rangedTimes[index].startTime = startTime
+            rangedTimes[index].endTime = endTime// = RangedTime(startTime: startTime, endTime: endTime)
+        }
     }
     
     func updateCenterBackgroundLayer() {
@@ -559,6 +580,19 @@ public enum ClockInteractionType: String {
             timeWedge.pathWidth = pathWidth
             timeWedge.trackRadius = trackRadius
             timeWedge.buttonRadius = buttonRadius
+            
+            if index == selectedTimeWedgeIndex {
+                timeWedge.isSelected = true
+                if timeWedges.count > 1 {
+                    timeWedge.showDeleteButton = true
+                } else {
+                    timeWedge.showDeleteButton = false
+                }
+            } else {
+                timeWedge.isSelected = false
+                timeWedge.showDeleteButton = false
+            }
+            
             timeWedge.setNeedsLayout()
         }
     }
@@ -751,7 +785,9 @@ public enum ClockInteractionType: String {
         
         let touch = touches.first!
         let pointOfTouch = touch.location(in: self)
-        guard let layer = self.overallPathLayer.hitTest( pointOfTouch ) else { return }
+        guard let layer = self.overallPathLayer.hitTest( pointOfTouch ) else {
+            return
+        }
         
 //        var prev = pointOfTouch
         let pointerMoverProducer: (@escaping (CGPoint) -> Angle, @escaping (Angle)->()) -> (CGPoint) -> () = { g, s in
@@ -778,16 +814,34 @@ public enum ClockInteractionType: String {
         }
         // Check if this layer has a time wedge tag
         else if let identifier = layer.name {
-            guard let timeWedgeLayer = layer.superlayer as? TimeWedgeLayer,
-                let wedgeIndex = timeWedges.index(of: timeWedgeLayer) else
-            {
-                print("No time wedges for index")
+            
+            // Apologies:Sorry about the hack! :(
+            
+            var timeWedgeLayer = layer
+            while timeWedgeLayer.superlayer != nil {
+                if let wedgeLayer = timeWedgeLayer.superlayer as? TimeWedgeLayer {
+                    timeWedgeLayer = wedgeLayer
+                    break
+                }
+                if let superLayer = timeWedgeLayer.superlayer {
+                     timeWedgeLayer = superLayer
+                } else {
+                    print("No time wedges for index")
+                    super.touchesBegan(touches, with: event)
+                    return
+                }
+            }
+            guard let wedgeIndex = timeWedges.index(of: timeWedgeLayer as! TimeWedgeLayer) else {
                 super.touchesBegan(touches, with: event)
                 return
             }
+            
             selectedTimeWedgeIndex = wedgeIndex
             
             switch identifier {
+            case TimeWedgeLayer.deleteButtonIdentifierName:
+                // Delete this time wedge
+                self.removeTimeWedge(at: wedgeIndex)
             case TimeWedgeLayer.wedgeIdentifierName:
                 break
                 // Get the angles for this wedge and change them

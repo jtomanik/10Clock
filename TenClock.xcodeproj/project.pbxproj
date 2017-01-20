@@ -8,7 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		123A00098C8A1EB16C8B2BAC /* CoreAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 123A0EBFF5B6F30085CBA25B /* CoreAnimation.swift */; };
-		D16EEC6A1E23E8280074D7E4 /* TimeWedgeLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D16EEC691E23E8280074D7E4 /* TimeWedgeLayer.swift */; };
+		D10818751E320B3700F9DFE4 /* crossIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D10818731E320B3700F9DFE4 /* crossIcon@2x.png */; };
+		D10818761E320B3700F9DFE4 /* crossIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D10818731E320B3700F9DFE4 /* crossIcon@2x.png */; };
+		D10818771E320B3700F9DFE4 /* crossIcon@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = D10818741E320B3700F9DFE4 /* crossIcon@3x.png */; };
+		D10818781E320B3700F9DFE4 /* crossIcon@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = D10818741E320B3700F9DFE4 /* crossIcon@3x.png */; };
+		D10818791E320B4500F9DFE4 /* downIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D1CC262B1E27D3990021FFE9 /* downIcon@2x.png */; };
+		D108187A1E320B4900F9DFE4 /* downIcon@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = D1CC262A1E27D3990021FFE9 /* downIcon@3x.png */; };
 		D16EEC6B1E23ED310074D7E4 /* TimeWedgeLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D16EEC691E23E8280074D7E4 /* TimeWedgeLayer.swift */; };
 		D1CC262C1E27D3990021FFE9 /* downIcon@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = D1CC262A1E27D3990021FFE9 /* downIcon@3x.png */; };
 		D1CC262D1E27D3990021FFE9 /* downIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = D1CC262B1E27D3990021FFE9 /* downIcon@2x.png */; };
@@ -65,6 +70,8 @@
 		123A0A5F3EBBDD4415A60AEF /* DateExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DateExtensions.swift; sourceTree = "<group>"; };
 		123A0C52CF7F9A43C23EF319 /* Clock.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Clock.swift; sourceTree = "<group>"; };
 		123A0EBFF5B6F30085CBA25B /* CoreAnimation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoreAnimation.swift; sourceTree = "<group>"; };
+		D10818731E320B3700F9DFE4 /* crossIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "crossIcon@2x.png"; sourceTree = "<group>"; };
+		D10818741E320B3700F9DFE4 /* crossIcon@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "crossIcon@3x.png"; sourceTree = "<group>"; };
 		D16EEC691E23E8280074D7E4 /* TimeWedgeLayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TimeWedgeLayer.swift; sourceTree = "<group>"; };
 		D1CC262A1E27D3990021FFE9 /* downIcon@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "downIcon@3x.png"; sourceTree = "<group>"; };
 		D1CC262B1E27D3990021FFE9 /* downIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "downIcon@2x.png"; sourceTree = "<group>"; };
@@ -133,6 +140,8 @@
 		D1CC262E1E27D3A00021FFE9 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				D10818731E320B3700F9DFE4 /* crossIcon@2x.png */,
+				D10818741E320B3700F9DFE4 /* crossIcon@3x.png */,
 				D1CC262A1E27D3990021FFE9 /* downIcon@3x.png */,
 				D1CC262B1E27D3990021FFE9 /* downIcon@2x.png */,
 			);
@@ -309,6 +318,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D10818761E320B3700F9DFE4 /* crossIcon@2x.png in Resources */,
+				D10818781E320B3700F9DFE4 /* crossIcon@3x.png in Resources */,
+				D108187A1E320B4900F9DFE4 /* downIcon@3x.png in Resources */,
+				D10818791E320B4500F9DFE4 /* downIcon@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -327,6 +340,8 @@
 				D8F6E82B1D7745B800E29842 /* LaunchScreen.storyboard in Resources */,
 				D8F6E8281D7745B800E29842 /* Assets.xcassets in Resources */,
 				D1CC262C1E27D3990021FFE9 /* downIcon@3x.png in Resources */,
+				D10818751E320B3700F9DFE4 /* crossIcon@2x.png in Resources */,
+				D10818771E320B3700F9DFE4 /* crossIcon@3x.png in Resources */,
 				D8F6E8261D7745B800E29842 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -363,7 +378,6 @@
 				D8F6E8231D7745B800E29842 /* ViewController.swift in Sources */,
 				D8F6E8211D7745B800E29842 /* AppDelegate.swift in Sources */,
 				D1F69DFC1DE32B78006D3D70 /* Date+Extensions.swift in Sources */,
-				D16EEC6A1E23E8280074D7E4 /* TimeWedgeLayer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
