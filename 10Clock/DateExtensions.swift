@@ -63,4 +63,20 @@ extension Date {
         //Return Result
         return dateWithHoursAdded
     }
+    
+    func nextHalfHour() -> Date {
+        
+        let calendar = Calendar.current
+        
+        let components: Set<Calendar.Component> = [.year, .month, .weekday, .day, .hour, .minute, .second, .weekday, .weekdayOrdinal]
+        
+        var dateComps = calendar.dateComponents(components, from: self)
+        
+        dateComps.minute = ((dateComps.minute! / 30) * 30) + 30
+        
+        dateComps.second = 0
+        
+        return calendar.date(from: dateComps)!
+    }
+
 }

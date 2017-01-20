@@ -501,6 +501,7 @@ public enum ClockInteractionType: String {
     }
     
     func resetTimeWedges() {
+        print("Reset Time Wedges")
         self.rangedSegmentsLayer.sublayers?.forEach({$0.removeFromSuperlayer()})
         timeWedges.removeAll()
         addTimeWedges()
@@ -508,28 +509,64 @@ public enum ClockInteractionType: String {
     
     func addTimeWedges() {
         for rangedAngle in rangedAngles {
-//            let tailAngle = timeToAngle(startTime as Date)
-//            let headAngle = timeToAngle(endTime as Date)
-            
-            let wedgeLayer = TimeWedgeLayer(headAngle: rangedAngle.tailAngle,
-                                            tailAngle: rangedAngle.headAngle,
-                                            size: overallPathLayer.size,
-                                            wedgeCenter: overallPathLayer.center,
-                                            insetSize: inset.size,
-                                            pathWidth: pathWidth,
-                                            trackRadius: trackRadius,
-                                            buttonRadius: buttonRadius,
-                                            gradientColors: gradientColors,
-                                            gradientLocations: gradientLocations)
-            
-            
-            
-            rangedSegmentsLayer.addSublayer(wedgeLayer)
-            
-            // Add the layer to an instance variable so we can manage removal
-            timeWedges.append(wedgeLayer)
-            
+            addTimeWedge(rangedAngle: rangedAngle)
         }
+    }
+    
+    func addTimeRangeAtPoint(angle: Angle) {
+        print("Adding time range for angle: \(angle)")
+        var newTime = angleToTime(angle)
+        print(newTime.description)
+        newTime = newTime.nextHalfHour()
+        var startTime = newTime.addHours(hoursToAdd: -2)
+        var endTime = newTime.addHours(hoursToAdd: 2)
+        
+        // Check that these times don't overlap another one already
+        rangedTimes.forEach { (rangedTime) in
+            
+            // If the next range's start overlaps this new times end then offset our end
+            if rangedTime.startTime < endTime &&
+                rangedTime.startTime > startTime {
+                endTime = rangedTime.startTime.addHours(hoursToAdd: -1)
+                print("Adjusting endtime to \(endTime.description) as to close to next segment")
+            }
+            // If the previous range's end time overlaps this new times start then offset our start
+            if rangedTime.endTime > startTime &&
+                rangedTime.startTime < endTime {
+                startTime = rangedTime.endTime.addHours(hoursToAdd: 1)
+                print("Adjusting starttime to \(startTime.description) as to close to next segment")
+            }
+            
+            if startTime >= endTime || startTime.addHours(hoursToAdd: 1) >= endTime {
+                // This segment doesn't have enough space to fit here
+                print("Space too small for new segment")
+                return
+            }
+        }
+        
+        let rangedTime = RangedTime(startTime: startTime, endTime: endTime)
+        rangedTimes.append(rangedTime)
+    
+    }
+    
+    func addTimeWedge(rangedAngle: Wedge) {
+        let wedgeLayer = TimeWedgeLayer(headAngle: rangedAngle.tailAngle,
+                                        tailAngle: rangedAngle.headAngle,
+                                        size: overallPathLayer.size,
+                                        wedgeCenter: overallPathLayer.center,
+                                        insetSize: inset.size,
+                                        pathWidth: pathWidth,
+                                        trackRadius: trackRadius,
+                                        buttonRadius: buttonRadius,
+                                        gradientColors: gradientColors,
+                                        gradientLocations: gradientLocations)
+        
+        
+        
+        rangedSegmentsLayer.addSublayer(wedgeLayer)
+        
+        // Add the layer to an instance variable so we can manage removal
+        timeWedges.append(wedgeLayer)
     }
     
     func removeTimeWedge(at index: Int) {
@@ -783,11 +820,6 @@ public enum ClockInteractionType: String {
             return
         }
         
-        let touch = touches.first!
-        let pointOfTouch = touch.location(in: self)
-        guard let layer = self.overallPathLayer.hitTest( pointOfTouch ) else {
-            return
-        }
         
 //        var prev = pointOfTouch
         let pointerMoverProducer: (@escaping (CGPoint) -> Angle, @escaping (Angle)->()) -> (CGPoint) -> () = { g, s in
@@ -802,6 +834,13 @@ public enum ClockInteractionType: String {
                 self.update()
             }
 
+        }
+        
+        let touch = touches.first!
+        let pointOfTouch = touch.location(in: self)
+        
+        guard let layer = self.overallPathLayer.hitTest( pointOfTouch ) else {
+            return
         }
         
         if layer == exactTimeIndicatorTouchLayer {
@@ -903,6 +942,30 @@ public enum ClockInteractionType: String {
                 break
             
                 
+            }
+        }
+        
+        else if let hitTrackLayer = self.trackLayer.hitTest( pointOfTouch ) {
+            print("Hit Test Track")
+            if clockInteractionType == .exact {
+                if (shouldMoveHead) {
+                    pointMover = pointerMoverProducer({ _ in self.headAngle}, {self.headAngle += $0; self.tailAngle += 0})
+                } else {
+                    
+                    pointMover = nil
+                }
+            } else {
+                // Create a new segment here
+                let angleOfTap = CGVector(
+                    from: self.bounds.center,
+                    to:CGPoint(x: pointOfTouch.x, y: self.layer.bounds.height - pointOfTouch.y)
+                    ).theta
+                self.addTimeRangeAtPoint(angle: angleOfTap)
+                
+                pointMover = nil
+                //                pointMover = pointerMoverProducer({ _ in self.headAngle}, {self.headAngle += $0; self.tailAngle += 0})
+                
+                //                self.addTimeRangeAtPoint(angle: )
             }
         }
 
