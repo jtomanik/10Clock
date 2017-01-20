@@ -517,11 +517,45 @@ public enum ClockInteractionType: String {
     
     func addTimeRangeAtPoint(angle: Angle) {
         print("Adding time range for angle: \(angle)")
-        var newTime = angleToTime(angle)
-        print(newTime.description)
-        newTime = newTime.nextHalfHour()
+        var tappedTime = angleToTime(angle)
+        print(tappedTime.description)
+        var newTime = tappedTime.nextHalfHour()
         var startTime = newTime.addHours(hoursToAdd: -2)
         var endTime = newTime.addHours(hoursToAdd: 2)
+        
+        // Make sure we're not straddling midnight
+        let calendar = Calendar.current
+        let startComponents = calendar.dateComponents([.hour, .minute], from: startTime)
+        let endComponents = calendar.dateComponents([.hour, .minute], from: endTime)
+        
+        
+        var requiresSnappingToMidnight = false
+        if startComponents.hour == endComponents.hour {
+            if startComponents.minute! >= endComponents.minute! {
+                requiresSnappingToMidnight = true
+            }
+        } else if startComponents.hour! > endComponents.hour! {
+            requiresSnappingToMidnight = true
+        }
+        
+        if requiresSnappingToMidnight {
+            // Check which side of midnight we should snap
+            let tappedTimeComponents = calendar.dateComponents([.hour, .minute], from: tappedTime)
+            if tappedTimeComponents.hour! > 12 {
+                var dateComponents = DateComponents()
+                dateComponents.hour = 23
+                dateComponents.minute = 30
+                endTime = calendar.date(from: dateComponents)!
+                startTime = endTime.addHours(hoursToAdd: -3)
+            } else {
+                var dateComponents = DateComponents()
+                dateComponents.hour = 0
+                dateComponents.minute = 0
+                startTime = calendar.date(from: dateComponents)!
+                endTime = startTime.addHours(hoursToAdd: 3)
+            }
+        }
+        
         
         // Check that these times don't overlap another one already
         rangedTimes.forEach { (rangedTime) in
