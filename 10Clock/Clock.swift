@@ -503,7 +503,6 @@ public enum ClockInteractionType: String {
     }
     
     func resetTimeWedges() {
-        print("Reset Time Wedges")
         self.rangedSegmentsLayer.sublayers?.forEach({$0.removeFromSuperlayer()})
         timeWedges.removeAll()
         addTimeWedges()
@@ -516,10 +515,8 @@ public enum ClockInteractionType: String {
     }
     
     func addTimeRangeAtPoint(angle: Angle) {
-        print("Adding time range for angle: \(angle)")
-        var tappedTime = angleToTime(angle)
-        print(tappedTime.description)
-        var newTime = tappedTime.nextHalfHour()
+        let tappedTime = angleToTime(angle)
+        let newTime = tappedTime.nextHalfHour()
         var startTime = newTime.addHours(hoursToAdd: -2)
         var endTime = newTime.addHours(hoursToAdd: 2)
         
@@ -564,18 +561,15 @@ public enum ClockInteractionType: String {
             if rangedTime.startTime < endTime &&
                 rangedTime.startTime > startTime {
                 endTime = rangedTime.startTime.addHours(hoursToAdd: -1)
-                print("Adjusting endtime to \(endTime.description) as to close to next segment")
             }
             // If the previous range's end time overlaps this new times start then offset our start
             if rangedTime.endTime > startTime &&
                 rangedTime.startTime < endTime {
                 startTime = rangedTime.endTime.addHours(hoursToAdd: 1)
-                print("Adjusting starttime to \(startTime.description) as to close to next segment")
             }
             
             if startTime >= endTime || startTime.addHours(hoursToAdd: 1) >= endTime {
                 // This segment doesn't have enough space to fit here
-                print("Space too small for new segment")
                 return
             }
         }
@@ -615,11 +609,6 @@ public enum ClockInteractionType: String {
         }
         if rangedTimes.indices.contains(index) {
             rangedTimes.remove(at: index)
-        }
-        if timeWedges.count == rangedAngles.count && rangedAngles.count == rangedTimes.count {
-            print("Removed segment without error")
-        } else {
-            print("Error removing segment")
         }
     }
     
@@ -901,7 +890,6 @@ public enum ClockInteractionType: String {
                 if let superLayer = timeWedgeLayer.superlayer {
                      timeWedgeLayer = superLayer
                 } else {
-                    print("No time wedges for index")
                     super.touchesBegan(touches, with: event)
                     return
                 }
@@ -981,8 +969,7 @@ public enum ClockInteractionType: String {
             }
         }
         
-        else if let hitTrackLayer = self.trackLayer.hitTest( pointOfTouch ) {
-            print("Hit Test Track")
+        else if let _ = self.trackLayer.hitTest( pointOfTouch ) {
             if clockInteractionType == .exact {
                 if (shouldMoveHead) {
                     pointMover = pointerMoverProducer({ _ in self.headAngle}, {self.headAngle += $0; self.tailAngle += 0})
