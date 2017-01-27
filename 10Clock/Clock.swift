@@ -576,6 +576,8 @@ public enum ClockInteractionType: String {
         
         let rangedTime = RangedTime(startTime: startTime, endTime: endTime)
         rangedTimes.append(rangedTime)
+        
+        selectedTimeWedgeIndex = rangedTimes.count - 1
     
     }
     
